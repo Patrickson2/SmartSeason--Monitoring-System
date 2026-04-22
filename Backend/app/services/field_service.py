@@ -1,65 +1,45 @@
-from sqlalchemy.orm import Session
-from typing import List, Optional
-
-from app.models.field import Field, FieldUpdate
-from app.schemas.field import FieldCreate, FieldUpdate as FieldUpdateSchema
+from datetime import date
+from typing import Literal
+from app.models.field import Field
 
 
-class FieldService:
-    @staticmethod
-    def get_fields(
-        db: Session, user_id: int, skip: int = 0, limit: int = 100
-    ) -> List[Field]:
-        return (
-            db.query(Field)
-            .filter(Field.owner_id == user_id)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+StatusResult = Literal["completed", "at_risk", "active"]
 
-    @staticmethod
-    def get_field(db: Session, field_id: int) -> Optional[Field]:
-        return db.query(Field).filter(Field.id == field_id).first()
 
-    @staticmethod
-    def create_field(db: Session, field_data: FieldCreate, user_id: int) -> Field:
-        field = Field(**field_data.model_dump(), owner_id=user_id)
-        db.add(field)
-        db.commit()
-        db.refresh(field)
-        return field
+def compute_field_status(field: Field) -> StatusResult:
+    """
+    Compute field status dynamically based on crop stage and time since planting.
 
-    @staticmethod
-    def update_field(
-        db: Session, field_id: int, field_data: FieldUpdateSchema
-    ) -> Optional[Field]:
-        field = db.query(Field).filter(Field.id == field_id).first()
-        if not field:
-            return None
-        for key, value in field_data.model_dump(exclude_unset=True).items():
-            setattr(field, key, value)
-        db.commit()
-        db.refresh(field)
-        return field
+    Logic:
+    - harvested -> completed
+    - planted + >14 days since planting -> at_risk
+    - growing + >60 days since planting -> at_risk
+    - ready + >21 days since planting -> at_risk
+    - otherwise -> active
+    """
+    from app.models.field import CropStage
 
-    @staticmethod
-    def delete_field(db: Session, field_id: int) -> bool:
-        field = db.query(Field).filter(Field.id == field_id).first()
-        if not field:
-            return False
-        db.delete(field)
-        db.commit()
-        return True
+    # Harvested fields are completed
+    if field.current_stage == CropStage.HARVESTED:
+        return "completed"
 
-    @staticmethod
-    def add_update(
-        db: Session, field_id: int, update_data: FieldUpdateSchema, user_id: int
-    ) -> FieldUpdate:
-        update = FieldUpdate(
-            **update_data.model_dump(), field_id=field_id, reported_by=user_id
-        )
-        db.add(update)
-        db.commit()
-        db.refresh(update)
-        return update
+    # Get today's date for calculation
+    today = date.today()
+
+    # Calculate days since planting
+    if field.planting_date:
+        days_since_planting = (today - field.planting_date).days
+    else:
+        days_since_planting = 0
+
+    # Check at_risk conditions based on stage and time
+    if field.current_stage == CropStage.PLANTED and days_since_planting > 14:
+        return "at_risk"
+
+    if field.current_stage == CropStage.GROWING and days_since_planting > 60:
+        return "at_risk"
+
+    if field.current_stage == CropStage.READY and days_since_planting > 21:
+        return "at_risk"
+
+    return "active"
