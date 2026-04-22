@@ -1,46 +1,61 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
+import uuid
 
 from app.database import get_db
 from app.models.user import User
-from app.models.field import Field, FieldUpdate
-from app.schemas.field import FieldUpdateCreate, FieldUpdateResponse
-from app.routers.auth import get_current_user
+from app.models.field import Field
+from app.schemas.field import FieldUpdateResponse
+from app.services.auth_service import get_current_user
 
-router = APIRouter()
-
-
-@router.post("/{field_id}/updates", response_model=FieldUpdateResponse)
-def create_field_update(
-    field_id: int,
-    update: FieldUpdateCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    field = db.query(Field).filter(Field.id == field_id).first()
-    if not field:
-        raise HTTPException(status_code=404, detail="Field not found")
-    db_update = FieldUpdate(
-        **update.model_dump(),
-        field_id=field_id,
-        reported_by=current_user.id,
-    )
-    db.add(db_update)
-    if update.stage:
-        field.current_stage = update.stage
-    if update.status:
-        field.status = update.status
-    db.commit()
-    db.refresh(db_update)
-    return db_update
+router = APIRouter(prefix="/fields", tags=["field-updates"])
 
 
 @router.get("/{field_id}/updates", response_model=List[FieldUpdateResponse])
-def read_field_updates(
-    field_id: int,
+def get_field_updates(
+    field_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    updates = db.query(FieldUpdate).filter(FieldUpdate.field_id == field_id).all()
-    return updates
+    """
+    Get update history for a field.
+    Agent can only view updates for fields assigned to them.
+    """
+    from app.models.field_update import FieldUpdate
+    from app.models.user import UserRole
+    from fastapi import HTTPException, status
+
+    # Check field exists
+    field = db.query(Field).filter(Field.id == field_id).first()
+    if not field:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Field not found"
+        )
+
+    # Agent can only view their assigned fields' updates
+    if current_user.role == UserRole.AGENT:
+        if field.assigned_agent_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to view this field",
+            )
+
+    updates = (
+        db.query(FieldUpdate)
+        .filter(FieldUpdate.field_id == field_id)
+        .order_by(FieldUpdate.created_at.desc())
+        .all()
+    )
+
+    return [
+        FieldUpdateResponse(
+            id=u.id,
+            field_id=u.field_id,
+            agent_id=u.agent_id,
+            stage_changed_to=u.stage_changed_to.value if u.stage_changed_to else None,
+            observation=u.observation,
+            created_at=u.created_at,
+        )
+        for u in updates
+    ]

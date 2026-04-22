@@ -1,84 +1,225 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+import uuid
 
 from app.database import get_db
-from app.models.user import User
-from app.models.field import Field
-from app.schemas.field import FieldCreate, FieldUpdate, FieldResponse
-from app.routers.auth import get_current_user
+from app.models.user import User, UserRole
+from app.models.field import Field, CropStage
+from app.models.field_update import FieldUpdate
+from app.schemas.field import (
+    FieldCreate,
+    FieldResponse,
+    FieldStageUpdate,
+    FieldUpdateCreate,
+    FieldUpdateResponse,
+)
+from app.services.field_service import compute_field_status
+from app.services.auth_service import get_current_user, require_admin
 
-router = APIRouter()
-
-
-@router.post("/", response_model=FieldResponse)
-def create_field(
-    field: FieldCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    db_field = Field(**field.model_dump(), owner_id=current_user.id)
-    db.add(db_field)
-    db.commit()
-    db.refresh(db_field)
-    return db_field
+router = APIRouter(prefix="/fields", tags=["fields"])
 
 
-@router.get("/", response_model=List[FieldResponse])
-def read_fields(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    fields = (
-        db.query(Field)
-        .filter(Field.owner_id == current_user.id)
-        .offset(skip)
-        .limit(limit)
-        .all()
+def field_to_response(field: Field) -> FieldResponse:
+    """Convert Field model to response with computed status."""
+    return FieldResponse(
+        id=field.id,
+        name=field.name,
+        crop_type=field.crop_type,
+        planting_date=field.planting_date,
+        current_stage=field.current_stage.value,
+        notes=field.notes,
+        assigned_agent_id=field.assigned_agent_id,
+        created_by_id=field.created_by_id,
+        created_at=field.created_at,
+        updated_at=field.updated_at,
+        status=compute_field_status(field),
     )
-    return fields
+
+
+@router.get("", response_model=List[FieldResponse])
+def list_fields(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    List fields.
+    - Admin sees all fields
+    - Agent sees only their assigned fields
+    """
+    if current_user.role == UserRole.ADMIN:
+        fields = db.query(Field).all()
+    else:
+        fields = (
+            db.query(Field).filter(Field.assigned_agent_id == current_user.id).all()
+        )
+
+    return [field_to_response(f) for f in fields]
+
+
+@router.post("", response_model=FieldResponse)
+def create_field(
+    request: FieldCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """
+    Create a new field and optionally assign it to an agent.
+    Admin only endpoint.
+    """
+    # Validate assigned agent exists if provided
+    if request.assigned_agent_id:
+        agent = (
+            db.query(User)
+            .filter(User.id == request.assigned_agent_id, User.role == UserRole.AGENT)
+            .first()
+        )
+        if not agent:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Assigned agent not found",
+            )
+
+    field = Field(
+        id=uuid.uuid4(),
+        name=request.name,
+        crop_type=request.crop_type,
+        planting_date=request.planting_date,
+        current_stage=CropStage.PLANTED,
+        notes=request.notes,
+        assigned_agent_id=request.assigned_agent_id,
+        created_by_id=current_user.id,
+    )
+    db.add(field)
+    db.commit()
+    db.refresh(field)
+
+    return field_to_response(field)
 
 
 @router.get("/{field_id}", response_model=FieldResponse)
-def read_field(
-    field_id: int,
+def get_field(
+    field_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """
+    Get a single field with its computed status.
+    Admin can view any field, agent can only view assigned fields.
+    """
     field = db.query(Field).filter(Field.id == field_id).first()
     if not field:
-        raise HTTPException(status_code=404, detail="Field not found")
-    return field
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Field not found"
+        )
+
+    # Agent can only view their assigned fields
+    if current_user.role == UserRole.AGENT:
+        if field.assigned_agent_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to view this field",
+            )
+
+    return field_to_response(field)
 
 
-@router.put("/{field_id}", response_model=FieldResponse)
-def update_field(
-    field_id: int,
-    field_update: FieldUpdate,
+@router.patch("/{field_id}/stage", response_model=FieldResponse)
+def update_field_stage(
+    field_id: uuid.UUID,
+    request: FieldStageUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """
+    Update the current stage of a field.
+    Agent can only update fields assigned to them.
+    """
+    # Validate stage
+    try:
+        new_stage = CropStage(request.stage)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid stage. Must be one of: planted, growing, ready, harvested",
+        )
+
     field = db.query(Field).filter(Field.id == field_id).first()
     if not field:
-        raise HTTPException(status_code=404, detail="Field not found")
-    for key, value in field_update.model_dump(exclude_unset=True).items():
-        setattr(field, key, value)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Field not found"
+        )
+
+    # Agent can only update their assigned fields
+    if current_user.role == UserRole.AGENT:
+        if field.assigned_agent_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to update this field",
+            )
+
+    old_stage = field.current_stage
+    field.current_stage = new_stage
     db.commit()
     db.refresh(field)
-    return field
+
+    # Create field update record for history
+    update = FieldUpdate(
+        id=uuid.uuid4(),
+        field_id=field.id,
+        agent_id=current_user.id,
+        stage_changed_to=new_stage,
+    )
+    db.add(update)
+    db.commit()
+
+    return field_to_response(field)
 
 
-@router.delete("/{field_id}")
-def delete_field(
-    field_id: int,
+@router.post("/{field_id}/updates", response_model=FieldUpdateResponse)
+def add_field_observation(
+    field_id: uuid.UUID,
+    request: FieldUpdateCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """
+    Add an observation note to a field.
+    Agent can only add observations to fields assigned to them.
+    """
     field = db.query(Field).filter(Field.id == field_id).first()
     if not field:
-        raise HTTPException(status_code=404, detail="Field not found")
-    db.delete(field)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Field not found"
+        )
+
+    # Agent can only update their assigned fields
+    if current_user.role == UserRole.AGENT:
+        if field.assigned_agent_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to update this field",
+            )
+
+    # Create field update record
+    field_update = FieldUpdate(
+        id=uuid.uuid4(),
+        field_id=field.id,
+        agent_id=current_user.id,
+        stage_changed_to=request.stage_changed_to,
+        observation=request.observation,
+    )
+    db.add(field_update)
     db.commit()
-    return {"detail": "Field deleted"}
+    db.refresh(field_update)
+
+    return FieldUpdateResponse(
+        id=field_update.id,
+        field_id=field_update.field_id,
+        agent_id=field_update.agent_id,
+        stage_changed_to=field_update.stage_changed_to.value
+        if field_update.stage_changed_to
+        else None,
+        observation=field_update.observation,
+        created_at=field_update.created_at,
+    )
