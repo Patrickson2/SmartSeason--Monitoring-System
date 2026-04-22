@@ -1,65 +1,60 @@
-from pydantic import BaseModel
-from typing import Optional
-from datetime import datetime
+from pydantic import BaseModel, Field as PydanticField
+from typing import Optional, List
+from datetime import date, datetime
+import uuid
 
 
-class FieldBase(BaseModel):
+class FieldCreate(BaseModel):
     name: str
-    location: Optional[str] = None
-    area_hectares: Optional[float] = None
-    soil_type: Optional[str] = None
-    crop_type: Optional[str] = None
-
-
-class FieldCreate(FieldBase):
-    planting_date: Optional[datetime] = None
-    expected_harvest_date: Optional[datetime] = None
+    crop_type: str
+    planting_date: Optional[date] = None
+    assigned_agent_id: Optional[uuid.UUID] = None
+    notes: Optional[str] = None
 
 
 class FieldUpdate(BaseModel):
     name: Optional[str] = None
-    location: Optional[str] = None
-    area_hectares: Optional[float] = None
-    soil_type: Optional[str] = None
     crop_type: Optional[str] = None
-    planting_date: Optional[datetime] = None
-    expected_harvest_date: Optional[datetime] = None
-    status: Optional[str] = None
-    current_stage: Optional[str] = None
+    planting_date: Optional[date] = None
+    assigned_agent_id: Optional[uuid.UUID] = None
     notes: Optional[str] = None
 
 
-class FieldResponse(FieldBase):
-    id: int
-    status: str
+class FieldStageUpdate(BaseModel):
+    stage: str  # Will be validated in the router
+
+
+class FieldResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    crop_type: str
+    planting_date: Optional[date]
     current_stage: str
     notes: Optional[str]
-    owner_id: int
-    planting_date: Optional[datetime]
-    expected_harvest_date: Optional[datetime]
+    assigned_agent_id: Optional[uuid.UUID]
+    created_by_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    status: str  # Computed at read time
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
+
+
+class FieldWithHistoryResponse(FieldResponse):
+    updates: List["FieldUpdateResponse"] = []
 
 
 class FieldUpdateCreate(BaseModel):
-    stage: Optional[str] = None
-    status: Optional[str] = None
-    notes: Optional[str] = None
-    image_url: Optional[str] = None
+    stage_changed_to: Optional[str] = None
+    observation: Optional[str] = None
 
 
 class FieldUpdateResponse(BaseModel):
-    id: int
-    field_id: int
-    stage: Optional[str]
-    status: Optional[str]
-    notes: Optional[str]
-    image_url: Optional[str]
-    reported_by: int
+    id: uuid.UUID
+    field_id: uuid.UUID
+    agent_id: uuid.UUID
+    stage_changed_to: Optional[str]
+    observation: Optional[str]
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}"
