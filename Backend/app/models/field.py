@@ -1,67 +1,57 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Boolean,
-    DateTime,
-    ForeignKey,
-    Float,
-    Enum,
-    Text,
-)
-from sqlalchemy.orm import relationship
-from datetime import datetime
+import uuid
 import enum
+from datetime import date, datetime
+from typing import Optional
+from sqlalchemy import Date, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
 
-class FieldStatus(str, enum.Enum):
-    ACTIVE = "active"
-    FALLOW = "fallow"
-    PLANTED = "planted"
-    HARVESTED = "harvested"
-
-
 class CropStage(str, enum.Enum):
-    GERMINATION = "germination"
-    VEGETATIVE = "vegetative"
-    FLOWERING = "flowering"
-    FRUITING = "fruiting"
-    MATURE = "mature"
+    PLANTED = "planted"
+    GROWING = "growing"
+    READY = "ready"
+    HARVESTED = "harvested"
 
 
 class Field(Base):
     __tablename__ = "fields"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    location = Column(String)
-    area_hectares = Column(Float)
-    soil_type = Column(String)
-    crop_type = Column(String)
-    planting_date = Column(DateTime)
-    expected_harvest_date = Column(DateTime)
-    status = Column(String, enum=FieldStatus, default=FieldStatus.ACTIVE)
-    current_stage = Column(String, enum=CropStage, default=CropStage.GERMINATION)
-    notes = Column(Text)
-    owner_id = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    crop_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    planting_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    current_stage: Mapped[CropStage] = mapped_column(
+        Enum(CropStage), nullable=False, default=CropStage.PLANTED
+    )
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    assigned_agent_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    created_by_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
-    owner = relationship("User", back_populates="fields")
-    updates = relationship("FieldUpdate", back_populates="field")
+    # Relationships
+    assigned_agent = relationship(
+        "User", back_populates="assigned_fields", foreign_keys=[assigned_agent_id]
+    )
+    created_by = relationship(
+        "User", back_populates="created_fields", foreign_keys=[created_by_id]
+    )
+    updates = relationship(
+        "FieldUpdate", back_populates="field", cascade="all, delete-orphan"
+    )
 
 
-class FieldUpdate(Base):
-    __tablename__ = "field_updates"
-
-    id = Column(Integer, primary_key=True, index=True)
-    field_id = Column(Integer, ForeignKey("fields.id"))
-    stage = Column(String, enum=CropStage)
-    status = Column(String, enum=FieldStatus)
-    notes = Column(Text)
-    image_url = Column(String)
-    reported_by = Column(Integer, ForeignKey("users.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-    field = relationship("Field", back_populates="updates")
+# Export CropStage for easier imports
+__all__ = ["Field", "CropStage"]
