@@ -1,74 +1,40 @@
 # Python
-__pycache__/
 *.py[cod]
-*$py.class
+__pycache__/
 *.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+*.dylib
 *.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Virtual environments
-venv/
+.Python
 env/
+venv/
 ENV/
 .venv/
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Backend virtual environment and sqlite DB
+Backend/venv/
+Backend/smartseason.db
 
-# IDE
+# Alembic cache / temp
+alembic.ini
+
+# Node / frontend
+node_modules/
+Frontend/node_modules/
+Frontend/dist/
+
+# Vite / build
+dist/
+.vite/
+
+# Editor files
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
-
-# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 
 # Logs
 *.log
-logs/
-
-# Node.js (for frontend)
-node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.npm
-.yarn
-
-# Build outputs
-dist/
-build/
-
-# Temporary files
-*.tmp
-*.temp
