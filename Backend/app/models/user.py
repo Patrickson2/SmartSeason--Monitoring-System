@@ -11,6 +11,12 @@ class UserRole(str, enum.Enum):
     AGENT = "agent"
 
 
+class ApprovalStatus(str, enum.Enum):
+    APPROVED = "approved"
+    PENDING = "pending"
+    REJECTED = "rejected"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -26,6 +32,9 @@ class User(Base):
         Enum(UserRole), nullable=False, default=UserRole.AGENT
     )
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    approval_status: Mapped[str] = mapped_column(
+        Enum(ApprovalStatus), nullable=False, default=ApprovalStatus.APPROVED
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False
     )

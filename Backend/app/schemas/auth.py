@@ -8,6 +8,8 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+    model_config = {"extra": "ignore"}
+
 
 class LoginResponse(BaseModel):
     access_token: str
@@ -23,10 +25,24 @@ class AgentCreate(BaseModel):
     password: str
 
 
+class AgentRegistrationRequest(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
+    model_config = {"extra": "ignore"}
+
+
 class AgentResponse(BaseModel):
     id: str
     name: str
     email: str
+    approval_status: str
     fields_count: int = 0
 
     model_config = {"from_attributes": True}
+
+
+class AgentApprovalRequest(BaseModel):
+    agent_id: str
+    action: str  # "approve" or "reject"

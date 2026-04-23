@@ -4,8 +4,8 @@ from typing import List
 import uuid
 
 from app.database import get_db
-from app.models.user import User, UserRole
-from app.schemas.auth import AgentCreate, AgentResponse
+from app.models.user import User, UserRole, ApprovalStatus
+from app.schemas.auth import AgentCreate, AgentResponse, AgentApprovalRequest
 from app.services.auth_service import hash_password, get_current_user, require_admin
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -36,13 +36,14 @@ def create_agent(request: AgentCreate, db: Session = Depends(get_db)):
         hashed_password=hash_password(request.password),
         role=UserRole.AGENT,
         is_active=True,
+        approval_status=ApprovalStatus.APPROVED,  # Admin-created agents are auto-approved
     )
     db.add(agent)
     db.commit()
     db.refresh(agent)
 
     return AgentResponse(
-        id=agent.id, name=agent.name, email=agent.email, fields_count=0
+        id=agent.id, name=agent.name, email=agent.email, approval_status=agent.approval_status.value, fields_count=0
     )
 
 
@@ -51,7 +52,7 @@ def create_agent(request: AgentCreate, db: Session = Depends(get_db)):
 )
 def list_agents(db: Session = Depends(get_db)):
     """
-    List all agents with their id, name, email, and field count.
+    List all agents with their id, name, email, approval status, and field count.
     Admin only endpoint.
     """
     agents = db.query(User).filter(User.role == UserRole.AGENT).all()
@@ -65,8 +66,39 @@ def list_agents(db: Session = Depends(get_db)):
                 id=agent.id,
                 name=agent.name,
                 email=agent.email,
+                approval_status=agent.approval_status.value,
                 fields_count=fields_count,
             )
         )
 
     return result
+
+
+@router.post(
+    "/agents/{agent_id}/approve", dependencies=[Depends(require_admin)]
+)
+def approve_agent(agent_id: str, request: AgentApprovalRequest, db: Session = Depends(get_db)):
+    """
+    Approve or reject an agent registration request.
+    Admin only endpoint.
+    """
+    agent = db.query(User).filter(User.id == agent_id, User.role == UserRole.AGENT).first()
+    if not agent:
+        from fastapi import HTTPException, status
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Agent not found"
+        )
+
+    if request.action == "approve":
+        agent.approval_status = ApprovalStatus.APPROVED
+    elif request.action == "reject":
+        agent.approval_status = ApprovalStatus.REJECTED
+    else:
+        from fastapi import HTTPException, status
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid action. Must be 'approve' or 'reject'"
+        )
+
+    db.commit()
+
+    return {"message": f"Agent {request.action}d successfully"}

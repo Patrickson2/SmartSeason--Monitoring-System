@@ -6,17 +6,16 @@ Create Date: 2024-04-22 18:30:00.000000
 
 """
 
-from typing import Sequence, Union
+from typing import Sequence, Union, Optional
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
-# revision identifiers, used by alembic.
+# revision identifiers, used by Alembic.
 revision: str = "001_create_initial_tables"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: Optional[str] = None
+branch_labels: Optional[str] = None
+dependencies: Optional[Sequence[str]] = None
 
 
 def upgrade() -> None:
