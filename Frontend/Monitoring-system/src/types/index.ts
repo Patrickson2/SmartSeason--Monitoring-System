@@ -50,7 +50,14 @@ export interface Agent {
   id: string;
   name: string;
   email: string;
+  approval_status: 'approved' | 'pending' | 'rejected';
   fields_count: number;
+}
+
+export interface AgentRegistrationRequest {
+  name: string;
+  email: string;
+  password: string;
 }
 
 export interface FieldCreate {
