@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
-import uuid
 
 from app.database import get_db
 from app.models.user import User
@@ -14,7 +13,7 @@ router = APIRouter(prefix="/fields", tags=["field-updates"])
 
 @router.get("/{field_id}/updates", response_model=List[FieldUpdateResponse])
 def get_field_updates(
-    field_id: uuid.UUID,
+    field_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

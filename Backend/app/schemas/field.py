@@ -8,7 +8,7 @@ class FieldCreate(BaseModel):
     name: str
     crop_type: str
     planting_date: Optional[date] = None
-    assigned_agent_id: Optional[uuid.UUID] = None
+    assigned_agent_id: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -16,7 +16,7 @@ class FieldUpdate(BaseModel):
     name: Optional[str] = None
     crop_type: Optional[str] = None
     planting_date: Optional[date] = None
-    assigned_agent_id: Optional[uuid.UUID] = None
+    assigned_agent_id: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -25,14 +25,14 @@ class FieldStageUpdate(BaseModel):
 
 
 class FieldResponse(BaseModel):
-    id: uuid.UUID
+    id: str
     name: str
     crop_type: str
     planting_date: Optional[date]
     current_stage: str
     notes: Optional[str]
-    assigned_agent_id: Optional[uuid.UUID]
-    created_by_id: uuid.UUID
+    assigned_agent_id: Optional[str]
+    created_by_id: str
     created_at: datetime
     updated_at: datetime
     status: str  # Computed at read time
@@ -50,11 +50,11 @@ class FieldUpdateCreate(BaseModel):
 
 
 class FieldUpdateResponse(BaseModel):
-    id: uuid.UUID
-    field_id: uuid.UUID
-    agent_id: uuid.UUID
+    id: str
+    field_id: str
+    agent_id: str
     stage_changed_to: Optional[str]
     observation: Optional[str]
     created_at: datetime
 
-    model_config = {"from_attributes": True}"
+    model_config = {"from_attributes": True}

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 import uuid
-import jwt
+from jose import jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -63,14 +63,8 @@ def get_current_user(
     if payload is None:
         raise credentials_exception
 
-    user_id_str: str = payload.get("sub")
-    if user_id_str is None:
-        raise credentials_exception
-
-    # Convert string to UUID
-    try:
-        user_id = uuid.UUID(user_id_str)
-    except ValueError:
+    user_id: str = payload.get("sub")
+    if user_id is None:
         raise credentials_exception
 
     user = db.query(User).filter(User.id == user_id).first()

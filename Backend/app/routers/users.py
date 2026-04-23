@@ -30,7 +30,7 @@ def create_agent(request: AgentCreate, db: Session = Depends(get_db)):
 
     # Create agent with hashed password
     agent = User(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         name=request.name,
         email=request.email,
         hashed_password=hash_password(request.password),

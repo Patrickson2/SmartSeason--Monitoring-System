@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-import uuid
 
 from app.database import get_db
 from app.models.user import User, UserRole
@@ -81,7 +80,7 @@ def create_field(
             )
 
     field = Field(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         name=request.name,
         crop_type=request.crop_type,
         planting_date=request.planting_date,
@@ -99,7 +98,7 @@ def create_field(
 
 @router.get("/{field_id}", response_model=FieldResponse)
 def get_field(
-    field_id: uuid.UUID,
+    field_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -126,7 +125,7 @@ def get_field(
 
 @router.patch("/{field_id}/stage", response_model=FieldResponse)
 def update_field_stage(
-    field_id: uuid.UUID,
+    field_id: str,
     request: FieldStageUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -165,7 +164,7 @@ def update_field_stage(
 
     # Create field update record for history
     update = FieldUpdate(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         field_id=field.id,
         agent_id=current_user.id,
         stage_changed_to=new_stage,
@@ -178,7 +177,7 @@ def update_field_stage(
 
 @router.post("/{field_id}/updates", response_model=FieldUpdateResponse)
 def add_field_observation(
-    field_id: uuid.UUID,
+    field_id: str,
     request: FieldUpdateCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -203,7 +202,7 @@ def add_field_observation(
 
     # Create field update record
     field_update = FieldUpdate(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         field_id=field.id,
         agent_id=current_user.id,
         stage_changed_to=request.stage_changed_to,

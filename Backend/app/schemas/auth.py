@@ -24,7 +24,7 @@ class AgentCreate(BaseModel):
 
 
 class AgentResponse(BaseModel):
-    id: uuid.UUID
+    id: str
     name: str
     email: str
     fields_count: int = 0
