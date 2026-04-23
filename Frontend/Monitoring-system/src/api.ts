@@ -1,0 +1,76 @@
+import axios, { AxiosError } from 'axios';
+import type { AuthResponse, LoginRequest, Field, FieldUpdate, Agent, FieldCreate } from './types';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
+const api = axios.create({
+  baseURL: API_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export const authApi = {
+  login: async (data: LoginRequest): Promise<AuthResponse> => {
+    const res = await api.post<AuthResponse>('/auth/login', data);
+    return res.data;
+  },
+};
+
+export const fieldsApi = {
+  getFields: async (): Promise<Field[]> => {
+    const res = await api.get<Field[]>('/fields');
+    return res.data;
+  },
+  getField: async (id: string): Promise<Field> => {
+    const res = await api.get<Field>(`/fields/${id}`);
+    return res.data;
+  },
+  createField: async (data: FieldCreate): Promise<Field> => {
+    const res = await api.post<Field>('/fields', data);
+    return res.data;
+  },
+  updateFieldStage: async (id: string, stage: string): Promise<Field> => {
+    const res = await api.patch<Field>(`/fields/${id}/stage`, { stage });
+    return res.data;
+  },
+  getFieldUpdates: async (fieldId: string): Promise<FieldUpdate[]> => {
+    const res = await api.get<FieldUpdate[]>(`/fields/${fieldId}/updates`);
+    return res.data;
+  },
+  addFieldUpdate: async (fieldId: string, data: { stage_changed_to?: string; observation?: string }): Promise<FieldUpdate> => {
+    const res = await api.post<FieldUpdate>(`/fields/${fieldId}/updates`, data);
+    return res.data;
+  },
+};
+
+export const usersApi = {
+  getAgents: async (): Promise<Agent[]> => {
+    const res = await api.get<Agent[]>('/users/agents');
+    return res.data;
+  },
+  createAgent: async (data: { name: string; email: string; password: string }): Promise<Agent> => {
+    const res = await api.post<Agent>('/users/agents', data);
+    return res.data;
+  },
+};
+
+export default api;

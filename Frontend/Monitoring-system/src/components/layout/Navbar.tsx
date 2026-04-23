@@ -1,35 +1,63 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 interface NavbarProps {
-  user: { username: string; role: string } | null;
-  onMenuClick: () => void;
+  title: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ user, onMenuClick }) => {
+export default function Navbar({ title }: NavbarProps) {
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
+    logout();
     navigate('/login');
   };
 
   return (
-    <nav className="navbar">
-      <button className="menu-btn" onClick={onMenuClick}>☰</button>
-      <div className="navbar-brand">
-        <h1>SmartSeason</h1>
+    <header style={navbarStyle}>
+      <div style={titleStyle}>{title}</div>
+      <div style={actionsStyle}>
+        <button onClick={handleLogout} style={logoutButtonStyle}>
+          Logout
+        </button>
       </div>
-      <div className="navbar-user">
-        {user && (
-          <>
-            <span>{user.username} ({user.role})</span>
-            <button onClick={handleLogout}>Logout</button>
-          </>
-        )}
-      </div>
-    </nav>
+    </header>
   );
+}
+
+const navbarStyle: React.CSSProperties = {
+  height: '64px',
+  backgroundColor: 'var(--color-surface)',
+  borderBottom: '1px solid var(--color-border)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '0 var(--spacing-xl)',
+  position: 'sticky',
+  top: 0,
+  zIndex: 50,
 };
 
-export default Navbar;
+const titleStyle: React.CSSProperties = {
+  fontSize: '1.25rem',
+  fontWeight: 600,
+  color: 'var(--color-text)',
+};
+
+const actionsStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 'var(--spacing-md)',
+};
+
+const logoutButtonStyle: React.CSSProperties = {
+  padding: 'var(--spacing-sm) var(--spacing-md)',
+  backgroundColor: 'transparent',
+  color: 'var(--color-text)',
+  border: '1px solid var(--color-border)',
+  borderRadius: 'var(--radius-md)',
+  cursor: 'pointer',
+  fontSize: '0.875rem',
+  transition: 'all 0.2s ease',
+};

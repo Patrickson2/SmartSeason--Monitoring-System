@@ -27,21 +27,10 @@ export default function StatCard({ title, value, icon, accentColor }: StatCardPr
         </div>
       )}
       <div>
-        <p style={{ 
-          margin: 0, 
-          fontSize: '0.875rem', 
-          color: 'var(--color-text-muted)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.05em',
-        }}>
+        <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           {title}
         </p>
-        <p style={{ 
-          margin: 0, 
-          fontSize: '1.5rem', 
-          fontWeight: 600,
-          color: 'var(--color-text)',
-        }}>
+        <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 600, color: 'var(--color-text)' }}>
           {value}
         </p>
       </div>

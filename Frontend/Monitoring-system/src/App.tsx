@@ -1,81 +1,67 @@
+import type { ReactNode } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/layout/ProtectedRoute';
+import { useAuth } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Layout from './components/layout/Layout';
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import AdminDashboard from './pages/admin/Dashboard';
-import Fields from './pages/admin/Fields';
-import FieldDetail from './pages/admin/FieldDetail';
-import Agents from './pages/admin/Agents';
+import AdminFields from './pages/admin/Fields';
+import AdminAgents from './pages/admin/Agents';
 import AgentDashboard from './pages/agent/Dashboard';
-import MyFields from './pages/agent/MyFields';
+import AgentMyFields from './pages/agent/MyFields';
 import AgentFieldDetail from './pages/agent/FieldDetail';
-import './App.css';
+
+function AdminRoute({ children }: { children: ReactNode }) {
+  return (
+    <ProtectedRoute allowedRoles={['admin']}>
+      <Layout>{children}</Layout>
+    </ProtectedRoute>
+  );
+}
+
+function AgentRoute({ children }: { children: ReactNode }) {
+  return (
+    <ProtectedRoute allowedRoles={['agent']}>
+      <Layout>{children}</Layout>
+    </ProtectedRoute>
+  );
+}
 
 function App() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  const getDefaultRoute = () => {
+    if (!user) return '/';
+    return user.role === 'admin' ? '/admin/dashboard' : '/agent/dashboard';
+  };
+
   return (
-    <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/fields"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <Fields />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/fields/:id"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <FieldDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/agents"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <Agents />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-fields"
-          element={
-            <ProtectedRoute allowedRoles={['agent']}>
-              <MyFields />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/my-fields/:id"
-          element={
-            <ProtectedRoute allowedRoles={['agent']}>
-              <AgentFieldDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/agent-dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['agent']}>
-              <AgentDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </AuthProvider>
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<Login />} />
+
+      {/* Admin Routes */}
+      <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+      <Route path="/admin/fields" element={<AdminRoute><AdminFields /></AdminRoute>} />
+      <Route path="/admin/agents" element={<AdminRoute><AdminAgents /></AdminRoute>} />
+
+      {/* Agent Routes */}
+      <Route path="/agent/dashboard" element={<AgentRoute><AgentDashboard /></AgentRoute>} />
+      <Route path="/agent/fields" element={<AgentRoute><AgentMyFields /></AgentRoute>} />
+      <Route path="/agent/fields/:id" element={<AgentRoute><AgentFieldDetail /></AgentRoute>} />
+
+      {/* Default and Wildcard */}
+      <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
+    </Routes>
   );
 }
 

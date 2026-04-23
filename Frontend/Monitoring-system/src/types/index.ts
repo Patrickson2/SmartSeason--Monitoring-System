@@ -1,45 +1,62 @@
+export type UserRole = 'admin' | 'agent';
+
 export interface User {
-  id: number;
+  id: string;
+  name: string;
   email: string;
-  username: string;
-  full_name?: string;
-  role: 'admin' | 'agent';
+  role: UserRole;
   is_active: boolean;
   created_at: string;
 }
 
+export type CropStage = 'planted' | 'growing' | 'ready' | 'harvested';
+export type FieldStatus = 'active' | 'at_risk' | 'completed';
+
 export interface Field {
-  id: number;
+  id: string;
   name: string;
-  location?: string;
-  area_hectares?: number;
-  soil_type?: string;
-  crop_type?: string;
-  planting_date?: string;
-  expected_harvest_date?: string;
-  status: FieldStatus;
+  crop_type: string;
+  planting_date: string | null;
   current_stage: CropStage;
-  notes?: string;
-  owner_id: number;
+  status: FieldStatus;
+  notes: string | null;
+  assigned_agent_id: string | null;
+  created_by_id: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface FieldUpdate {
-  id: number;
-  field_id: number;
-  stage?: CropStage;
-  status?: FieldStatus;
-  notes?: string;
-  image_url?: string;
-  reported_by: number;
+  id: string;
+  field_id: string;
+  agent_id: string;
+  stage_changed_to: CropStage | null;
+  observation: string | null;
   created_at: string;
 }
 
-export type FieldStatus = 'active' | 'fallow' | 'planted' | 'harvested';
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user_role: string;
+}
 
-export type CropStage = 'germination' | 'vegetative' | 'flowering' | 'fruiting' | 'mature';
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
 
-export interface ApiError {
-  detail: string;
+export interface Agent {
+  id: string;
+  name: string;
+  email: string;
+  fields_count: number;
+}
+
+export interface FieldCreate {
+  name: string;
+  crop_type: string;
+  planting_date?: string;
+  assigned_agent_id?: string;
+  notes?: string;
 }

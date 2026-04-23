@@ -1,108 +1,98 @@
-import React, { useEffect, useState } from 'react';
-import { fieldsApi, Field, FieldCreate } from '../api/fields';
-import { FieldCard } from '../components/fields/FieldCard';
-import { FieldForm } from '../components/fields/FieldForm';
-import { Modal } from '../components/ui/Modal';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { fieldsApi, usersApi } from '../../api';
+import type { Field, Agent, FieldCreate } from '../../types';
+import Modal from '../../components/Modal';
 
-const Fields: React.FC = () => {
-  const [fields, setFields] = useState<Field[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export default function AdminFields() {
+  const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
-  const [selectedField, setSelectedField] = useState<Field | null>(null);
+  const [formData, setFormData] = useState<FieldCreate>({ name: '', crop_type: '', planting_date: '', notes: '' });
 
-  const loadFields = async () => {
-    try {
-      const data = await fieldsApi.getFields();
-      setFields(data);
-    } catch (error) {
-      console.error('Failed to load fields:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: fields = [], isLoading } = useQuery<Field[]>({ queryKey: ['fields'], queryFn: fieldsApi.getFields });
+  const { data: agents = [] } = useQuery<Agent[]>({ queryKey: ['agents'], queryFn: usersApi.getAgents });
 
-  useEffect(() => {
-    loadFields();
-  }, []);
-
-  const handleCreateField = async (data: FieldCreate) => {
-    await fieldsApi.createField(data);
-    setShowModal(false);
-    loadFields();
-  };
-
-  const handleUpdateField = async (data: FieldCreate) => {
-    if (selectedField) {
-      await fieldsApi.updateField(selectedField.id, data);
-      setSelectedField(null);
+  const createMutation = useMutation({
+    mutationFn: (data: FieldCreate) => fieldsApi.createField(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fields'] });
       setShowModal(false);
-      loadFields();
-    }
+      setFormData({ name: '', crop_type: '', planting_date: '', notes: '' });
+    },
+  });
+
+  const handleSubmit = (e: Event) => {
+    e.preventDefault();
+    createMutation.mutate(formData);
   };
 
-  const handleDeleteField = async (id: number) => {
-    if (confirm('Are you sure you want to delete this field?')) {
-      await fieldsApi.deleteField(id);
-      loadFields();
-    }
-  };
-
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <div style={{ padding: 'var(--spacing-xl)' }}><p>Loading...</p></div>;
 
   return (
-    <div className="fields-page">
-      <div className="page-header">
-        <h1>Fields</h1>
-        <button onClick={() => setShowModal(true)}>Add Field</button>
-      </div>
-      <div className="fields-grid">
-        {fields.map(field => (
-          <FieldCard
-            key={field.id}
-            field={field}
-            onClick={() => setSelectedField(field)}
-          />
-        ))}
+    <div style={{ padding: 'var(--spacing-xl)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
+        <div><h1>Fields</h1><p className="text-muted">Manage all fields</p></div>
+        <button onClick={() => setShowModal(true)} className="btn btn-primary">Add Field</button>
       </div>
 
-      <Modal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setSelectedField(null);
-        }}
-        title={selectedField ? 'Edit Field' : 'Add Field'}
-      >
-        <FieldForm
-          initialData={selectedField || undefined}
-          onSubmit={selectedField ? handleUpdateField : handleCreateField}
-          onCancel={() => {
-            setShowModal(false);
-            setSelectedField(null);
-          }}
-        />
-      </Modal>
+      <div style={{ backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)' }}>
+        {fields.length === 0 ? (
+          <p className="text-muted" style={{ padding: 'var(--spacing-lg)', textAlign: 'center' }}>No fields found. Add your first field.</p>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead><tr style={{ backgroundColor: 'var(--color-bg)' }}>
+              <th style={thStyle}>Name</th><th style={thStyle}>Crop Type</th><th style={thStyle}>Stage</th><th style={thStyle}>Assigned To</th><th style={thStyle}>Planting Date</th>
+            </tr></thead>
+            <tbody>
+              {fields.map((field) => (
+                <tr key={field.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                  <td style={tdStyle}>{field.name}</td>
+                  <td style={tdStyle}>{field.crop_type}</td>
+                  <td style={tdStyle}>{field.current_stage}</td>
+                  <td style={tdStyle}>{agents.find((a) => a.id === field.assigned_agent_id)?.name || '-'}</td>
+                  <td style={tdStyle}>{field.planting_date ? new Date(field.planting_date).toLocaleDateString() : '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
 
-      {selectedField && (
-        <Modal
-          isOpen={!!selectedField && !showModal}
-          onClose={() => setSelectedField(null)}
-          title={selectedField.name}
-        >
-          <div className="field-detail">
-            <p><strong>Location:</strong> {selectedField.location}</p>
-            <p><strong>Area:</strong> {selectedField.area_hectares} ha</p>
-            <p><strong>Status:</strong> {selectedField.status}</p>
-            <p><strong>Stage:</strong> {selectedField.current_stage}</p>
-            <div className="field-actions">
-              <button onClick={() => setShowModal(true)}>Edit</button>
-              <button onClick={() => handleDeleteField(selectedField.id)}>Delete</button>
-            </div>
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Create New Field">
+        <form onSubmit={(e) => handleSubmit(e as any)}>
+          <div className="form-group">
+            <label htmlFor="name">Field Name *</label>
+            <input type="text" id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
           </div>
-        </Modal>
-      )}
+          <div className="form-group">
+            <label htmlFor="crop_type">Crop Type *</label>
+            <input type="text" id="crop_type" value={formData.crop_type} onChange={(e) => setFormData({ ...formData, crop_type: e.target.value })} placeholder="e.g., Wheat, Corn, Rice" required />
+          </div>
+          <div className="form-group">
+            <label htmlFor="planting_date">Planting Date</label>
+            <input type="date" id="planting_date" value={formData.planting_date || ''} onChange={(e) => setFormData({ ...formData, planting_date: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="assigned_agent">Assign Agent</label>
+            <select id="assigned_agent" value={formData.assigned_agent_id || ''} onChange={(e) => setFormData({ ...formData, assigned_agent_id: e.target.value || undefined })}>
+              <option value="">-- Select Agent --</option>
+              {agents.map((agent) => (<option key={agent.id} value={agent.id}>{agent.name}</option>))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="notes">Notes</label>
+            <textarea id="notes" value={formData.notes || ''} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} rows={3} />
+          </div>
+          {createMutation.isError && <p className="error-text">Failed to create field</p>}
+          <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-md)' }}>
+            <button type="submit" className="btn btn-primary" disabled={createMutation.isPending}>{createMutation.isPending ? 'Creating...' : 'Create Field'}</button>
+            <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary">Cancel</button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
-};
+}
 
-export default Fields;
+const thStyle = { padding: 'var(--spacing-md)', textAlign: 'left' as const, fontSize: '0.875rem', fontWeight: 500, color: 'var(--color-text-muted)' };
+const tdStyle = { padding: 'var(--spacing-md)', fontSize: '0.875rem' };
