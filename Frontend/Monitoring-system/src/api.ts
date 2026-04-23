@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import type { AuthResponse, LoginRequest, Field, FieldUpdate, Agent, FieldCreate } from './types';
+import type { AuthResponse, LoginRequest, Field, FieldUpdate, Agent, FieldCreate, AgentRegistrationRequest } from './types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
@@ -31,6 +31,10 @@ api.interceptors.response.use(
 export const authApi = {
   login: async (data: LoginRequest): Promise<AuthResponse> => {
     const res = await api.post<AuthResponse>('/auth/login', data);
+    return res.data;
+  },
+  registerAgent: async (data: AgentRegistrationRequest): Promise<Agent> => {
+    const res = await api.post<Agent>('/auth/register/agent', data);
     return res.data;
   },
 };
