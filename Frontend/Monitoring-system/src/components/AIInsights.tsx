@@ -6,7 +6,7 @@ interface AIInsightsProps {
     crop_type: string;
     current_stage: string;
     status: string;
-    planting_date?: string;
+    planting_date?: string | null;
   };
 }
 
