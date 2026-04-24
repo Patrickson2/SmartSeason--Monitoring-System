@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Footer from '../components/Footer';
 
 export default function LandingPage() {
   const { user, logout } = useAuth();
@@ -46,9 +47,9 @@ export default function LandingPage() {
           </div>
 
           {/* Auth Buttons */}
-          <div style={authButtonsStyle}>
+          <div style={{ marginLeft: 'auto' }}>
             {isAuthenticated ? (
-              <>
+              <div style={authButtonsStyle}>
                 <span style={userGreetingStyle}>
                   Welcome, {user.role}
                 </span>
@@ -58,16 +59,11 @@ export default function LandingPage() {
                 <button onClick={handleLogout} style={logoutButtonStyle}>
                   Logout
                 </button>
-              </>
+              </div>
             ) : (
-              <>
-                <Link to="/login" style={signInButtonStyle}>
-                  Sign In
-                </Link>
-                <Link to="/login" style={signUpButtonStyle}>
-                  Sign Up
-                </Link>
-              </>
+              <Link to="/login" style={getStartedButtonStyle}>
+                Get Started
+              </Link>
             )}
           </div>
 
@@ -108,14 +104,9 @@ export default function LandingPage() {
                   </button>
                 </>
               ) : (
-                <>
-                  <Link to="/login" style={mobileNavLinkStyle}>
-                    Sign In
-                  </Link>
-                  <Link to="/login" style={mobileNavLinkStyle}>
-                    Sign Up
-                  </Link>
-                </>
+                <Link to="/login" style={mobileNavLinkStyle}>
+                  Get Started
+                </Link>
               )}
             </div>
           </div>
@@ -143,27 +134,11 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer style={footerStyle}>
-        <div style={sectionContainerStyle}>
-          <div style={footerContentStyle}>
-            <div>
-              <h4 style={{ margin: '0 0 var(--spacing-md)' }}>SmartSeason</h4>
-              <p style={{ margin: 0, opacity: 0.8 }}>Agricultural Field Monitoring System</p>
-            </div>
-            <div>
-              <h4 style={{ margin: '0 0 var(--spacing-md)' }}>Quick Links</h4>
-              <Link to="/about" style={footerLinkStyle}>About</Link>
-              <Link to="/contact" style={footerLinkStyle}>Contact</Link>
-              {isAuthenticated && (
-                <Link to={dashboardRoute} style={footerLinkStyle}>Dashboard</Link>
-              )}
-            </div>
-          </div>
-          <div style={footerBottomStyle}>
-            <p style={{ margin: 0 }}>© 2026 SmartSeason. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer 
+        isAuthenticated={isAuthenticated}
+        userRole={user?.role}
+        dashboardRoute={dashboardRoute}
+      />
     </div>
   );
 }
@@ -197,9 +172,9 @@ const navContainerStyle = {
 const logoStyle = {
   fontSize: '1.5rem',
   fontWeight: 700,
+  marginRight: 'var(--spacing-xl)',
   color: 'white' as const,
   textDecoration: 'none',
-  marginRight: 'var(--spacing-lg)',
 };
 
 const desktopMenuStyle = {
@@ -387,39 +362,4 @@ const getStartedButtonStyle = {
 const sectionContainerStyle = {
   maxWidth: '1200px',
   margin: '0 auto',
-};
-
-const footerStyle = {
-  marginTop: 'auto',
-  backgroundColor: 'var(--color-primary)',
-  color: 'white' as const,
-  padding: 'var(--spacing-xl) var(--spacing-lg)',
-  borderTop: '1px solid var(--color-border)',
-};
-
-const footerContentStyle = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-  gap: 'var(--spacing-xl)',
-  marginBottom: 'var(--spacing-lg)',
-  paddingBottom: 'var(--spacing-lg)',
-  borderBottom: '1px solid rgba(255,255,255,0.1)',
-};
-
-const footerLinkStyle = {
-  display: 'block',
-  color: 'rgba(255,255,255,0.8)',
-  textDecoration: 'none',
-  fontSize: '0.9rem',
-  margin: 'var(--spacing-sm) 0',
-  background: 'none',
-  border: 'none',
-  cursor: 'pointer',
-  transition: 'color 0.2s',
-};
-
-const footerBottomStyle = {
-  textAlign: 'center' as const,
-  opacity: 0.7,
-  fontSize: '0.875rem',
 };

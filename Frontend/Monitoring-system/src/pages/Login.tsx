@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { authApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import type { UserRole, AgentRegistrationRequest } from '../types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,6 +15,7 @@ export default function Login() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Registration form state
   const [regName, setRegName] = useState('');
@@ -22,6 +25,8 @@ export default function Login() {
   const [regError, setRegError] = useState('');
   const [regSuccess, setRegSuccess] = useState('');
   const [isRegLoading, setIsRegLoading] = useState(false);
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
 
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -197,14 +202,43 @@ export default function Login() {
 
               <div style={inputGroupStyle}>
                 <label style={labelStyle}>Password</label>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                  style={inputStyle}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showLoginPassword ? "text" : "password"}
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                    style={{
+                      ...inputStyle,
+                      paddingRight: '40px'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#333',
+                      fontSize: '16px',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <FontAwesomeIcon 
+  icon={showLoginPassword ? faEyeSlash : faEye} 
+  style={{ fontSize: '16px' }}
+/>
+                  </button>
+                </div>
               </div>
 
               <button
@@ -222,9 +256,9 @@ export default function Login() {
             /* Registration Form */
             <form onSubmit={(e) => handleRegistration(e as any)} style={formStyle}>
               <div style={formHeaderStyle}>
-                <h2 style={formTitleStyle}>Join SmartSeason</h2>
+                <h2 style={formTitleStyle}>Create your agent account</h2>
                 <p style={formSubtitleStyle}>
-                  Create your agent account
+                  Note: New agent accounts require approval from an administrator before you can access the system.
                 </p>
               </div>
 
@@ -262,26 +296,84 @@ export default function Login() {
 
               <div style={inputGroupStyle}>
                 <label style={labelStyle}>Password</label>
-                <input
-                  type="password"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                  placeholder="Create a password (min. 6 characters)"
-                  required
-                  style={inputStyle}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showRegPassword ? "text" : "password"}
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    placeholder="Create a password (min. 6 characters)"
+                    required
+                    style={{
+                      ...inputStyle,
+                      paddingRight: '40px'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#333',
+                      fontSize: '16px',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <FontAwesomeIcon 
+  icon={showRegPassword ? faEyeSlash : faEye} 
+  style={{ fontSize: '16px' }}
+/>
+                  </button>
+                </div>
               </div>
 
               <div style={inputGroupStyle}>
                 <label style={labelStyle}>Confirm Password</label>
-                <input
-                  type="password"
-                  value={regConfirmPassword}
-                  onChange={(e) => setRegConfirmPassword(e.target.value)}
-                  placeholder="Confirm your password"
-                  required
-                  style={inputStyle}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showRegConfirmPassword ? "text" : "password"}
+                    value={regConfirmPassword}
+                    onChange={(e) => setRegConfirmPassword(e.target.value)}
+                    placeholder="Confirm your password"
+                    required
+                    style={{
+                      ...inputStyle,
+                      paddingRight: '40px'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#333',
+                      fontSize: '16px',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <FontAwesomeIcon 
+  icon={showRegConfirmPassword ? faEyeSlash : faEye} 
+  style={{ fontSize: '16px' }}
+/>
+                  </button>
+                </div>
               </div>
 
               <button
@@ -295,12 +387,7 @@ export default function Login() {
                 {isRegLoading ? 'Creating Account...' : 'Create Account'}
               </button>
 
-              <p style={approvalNoteStyle}>
-                <small>
-                  Note: New agent accounts require approval from an administrator before you can access the system.
-                </small>
-              </p>
-            </form>
+                          </form>
           )}
         </div>
       </div>
@@ -512,8 +599,8 @@ const inputStyle = {
 const submitButtonStyle = {
   width: '100%',
   padding: 'var(--spacing-md)',
-  backgroundColor: 'var(--color-primary)',
-  color: 'white',
+  backgroundColor: 'white',
+  color: '#5c3816',
   border: 'none',
   borderRadius: 'var(--radius-md)',
   fontSize: '1rem',
