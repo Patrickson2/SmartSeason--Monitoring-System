@@ -77,4 +77,25 @@ export const usersApi = {
   },
 };
 
+export const aiApi = {
+  analyzeFieldImage: async (fieldId: string, image: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append('image', image);
+    const res = await api.post(`/ai/analyze-field/${fieldId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  },
+  getFieldInsights: async (fieldId: string): Promise<any> => {
+    const res = await api.get(`/ai/insights/${fieldId}`);
+    return res.data;
+  },
+  getSystemStatus: async (): Promise<any> => {
+    const res = await api.get('/ai/system-status');
+    return res.data;
+  },
+};
+
 export default api;

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fieldsApi, usersApi } from '../../api';
+import { fieldsApi, usersApi, aiApi } from '../../api';
 import type { Field, Agent, FieldStatus, CropStage } from '../../types';
 import StatCard from '../../components/StatCard';
 import StatusBadge from '../../components/StatusBadge';
@@ -8,6 +8,7 @@ import StageBadge from '../../components/StageBadge';
 export default function AdminDashboard() {
   const { data: fields = [], isLoading: fieldsLoading } = useQuery<Field[]>({ queryKey: ['fields'], queryFn: fieldsApi.getFields });
   const { data: agents = [] } = useQuery<Agent[]>({ queryKey: ['agents'], queryFn: usersApi.getAgents });
+  const { data: aiStatus } = useQuery({ queryKey: ['ai-status'], queryFn: aiApi.getSystemStatus });
 
   const totalFields = fields.length;
   const activeFields = fields.filter((f) => f.status === 'active').length;
@@ -46,6 +47,91 @@ export default function AdminDashboard() {
         <StatCard title="At Risk" value={atRiskFields} accentColor="#f59e0b" />
         <StatCard title="Completed" value={completedFields} accentColor="#6b7280" />
       </div>
+
+      {/* AI System Status */}
+      {aiStatus && (
+        <div style={{ 
+          backgroundColor: 'var(--color-surface)', 
+          borderRadius: 'var(--radius-lg)', 
+          padding: 'var(--spacing-lg)', 
+          marginBottom: 'var(--spacing-xl)',
+          boxShadow: 'var(--shadow-sm)',
+          border: '2px solid rgba(76, 175, 80, 0.2)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)' }}>
+            <h2 style={{ margin: 0, fontSize: '1.25rem' }}>AI System Status</h2>
+            <span style={{
+              fontSize: '0.75rem',
+              backgroundColor: aiStatus.status === 'operational' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
+              color: aiStatus.status === 'operational' ? '#4caf50' : '#f44336',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontWeight: 'bold'
+            }}>
+              {aiStatus.status.toUpperCase()}
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-md)' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
+                {aiStatus.processing_stats?.images_processed_today || 0}
+              </div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Images Today</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
+                {aiStatus.processing_stats?.crops_analyzed || 0}
+              </div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Crops Analyzed</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#4caf50' }}>
+                {aiStatus.processing_stats?.accuracy_rate?.split('%')[0] || '0'}%
+              </div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>AI Accuracy</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>
+                {aiStatus.processing_stats?.average_processing_time?.split('s')[0] || '0'}s
+              </div>
+              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Avg Processing</div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 'var(--spacing-sm)' }}>
+            <div style={{ fontWeight: 'bold', marginBottom: 'var(--spacing-xs)', fontSize: '0.875rem' }}>AI Capabilities:</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--spacing-xs)' }}>
+              {aiStatus.capabilities?.map((capability: string, index: number) => (
+                <span
+                  key={index}
+                  style={{
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    color: '#4caf50',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    fontWeight: 500
+                  }}
+                >
+                  {capability}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div style={{
+            fontSize: '0.75rem',
+            color: 'var(--color-text-muted)',
+            textAlign: 'center',
+            padding: 'var(--spacing-sm)',
+            backgroundColor: 'var(--color-bg)',
+            borderRadius: 'var(--radius-sm)'
+          }}>
+            Last updated: {new Date(aiStatus.last_update).toLocaleString()}
+          </div>
+        </div>
+      )}
 
       <div style={{ backgroundColor: 'var(--color-surface)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
         <div style={{ padding: 'var(--spacing-md)', borderBottom: '1px solid var(--color-border)' }}>

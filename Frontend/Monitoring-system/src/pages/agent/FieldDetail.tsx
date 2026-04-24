@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fieldsApi } from '../../api';
+import { fieldsApi, aiApi } from '../../api';
 import type { Field, FieldUpdate, CropStage } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import StageBadge from '../../components/StageBadge';
+import AIImageUpload from '../../components/AIImageUpload';
+import CropAnalysisViewer from '../../components/CropAnalysisViewer';
+import AIInsights from '../../components/AIInsights';
 
 // Stage progression order - agents can only move forward
 const STAGE_ORDER: CropStage[] = ['planted', 'growing', 'ready', 'harvested'];
@@ -17,6 +20,11 @@ export default function AgentFieldDetail() {
   const [observation, setObservation] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  
+  // AI-related state
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [analysis, setAnalysis] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const { data: field, isLoading: fieldLoading } = useQuery<Field>({
     queryKey: ['field', id],
@@ -29,6 +37,40 @@ export default function AgentFieldDetail() {
     queryFn: () => fieldsApi.getFieldUpdates(id!),
     enabled: !!id,
   });
+
+  const { data: insights } = useQuery({
+    queryKey: ['field-insights', id],
+    queryFn: () => aiApi.getFieldInsights(id!),
+    enabled: !!id,
+  });
+
+  // Handle image upload and analysis
+  const handleImageAnalysis = async (imageUrl: string) => {
+    setUploadedImage(imageUrl);
+    setIsAnalyzing(true);
+    
+    try {
+      // Convert data URL to File for upload
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const file = new File([blob], 'field-image.jpg', { type: 'image/jpeg' });
+      
+      // Call AI analysis API
+      const result = await aiApi.analyzeFieldImage(id!, file);
+      setAnalysis(result);
+      
+      setShowSuccess(true);
+      setSuccessMessage('AI analysis completed successfully!');
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error) {
+      console.error('AI analysis failed:', error);
+      setShowSuccess(true);
+      setSuccessMessage('AI analysis failed. Please try again.');
+      setTimeout(() => setShowSuccess(false), 3000);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const stageMutation = useMutation({
     mutationFn: ({ fieldId, stage }: { fieldId: string; stage: string }) => 
@@ -159,6 +201,48 @@ export default function AgentFieldDetail() {
             <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Notes</p>
             <p style={{ margin: 0 }}>{field.notes}</p>
           </div>
+        )}
+      </div>
+
+      {/* AI Features Section */}
+      <div style={{
+        backgroundColor: 'var(--color-surface)',
+        borderRadius: 'var(--radius-lg)',
+        padding: 'var(--spacing-lg)',
+        marginBottom: 'var(--spacing-xl)',
+        boxShadow: 'var(--shadow-sm)',
+        border: '2px solid rgba(76, 175, 80, 0.2)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginBottom: 'var(--spacing-md)' }}>
+          <h2 style={{ margin: 0, fontSize: '1.25rem' }}>AI-Powered Analysis</h2>
+          <span style={{
+            fontSize: '0.75rem',
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            color: '#4caf50',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            fontWeight: 'normal'
+          }}>
+            Smart Features
+          </span>
+        </div>
+
+        {/* AI Insights */}
+        <AIInsights field={field} />
+
+        {/* Image Upload and Analysis */}
+        <AIImageUpload 
+          onImageSelect={handleImageAnalysis} 
+          isProcessing={isAnalyzing}
+        />
+
+        {/* Analysis Results */}
+        {(uploadedImage || analysis) && (
+          <CropAnalysisViewer
+            imageUrl={uploadedImage}
+            analysis={analysis}
+            isAnalyzing={isAnalyzing}
+          />
         )}
       </div>
 

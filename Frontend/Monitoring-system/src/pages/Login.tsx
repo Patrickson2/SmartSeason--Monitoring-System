@@ -99,15 +99,15 @@ export default function Login() {
             </p>
             <div style={featuresStyle}>
               <div style={featureItemStyle}>
-                <span style={featureIconStyle}>🌱</span>
+                <span style={featureIconStyle}></span>
                 <span>Real-time field monitoring</span>
               </div>
               <div style={featureItemStyle}>
-                <span style={featureIconStyle}>📊</span>
+                <span style={featureIconStyle}></span>
                 <span>Data-driven insights</span>
               </div>
               <div style={featureItemStyle}>
-                <span style={featureIconStyle}>👥</span>
+                <span style={featureIconStyle}></span>
                 <span>Collaborative platform</span>
               </div>
             </div>
@@ -379,7 +379,7 @@ const rightPanelStyle = {
   justifyContent: 'center',
   padding: 'var(--spacing-xl)',
   minWidth: '400px',
-  backgroundColor: '#5d3a1a',
+  backgroundColor: '#5c3816',
 } as React.CSSProperties;
 
 const formContainerStyle = {

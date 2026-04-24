@@ -19,14 +19,6 @@ export default function LandingPage() {
     navigate('/');
   };
 
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    setMobileMenuOpen(false);
-  };
-
   return (
     <div style={landingWrapperStyle}>
       {/* Navigation Bar */}
@@ -39,18 +31,18 @@ export default function LandingPage() {
 
           {/* Desktop Menu */}
           <div style={desktopMenuStyle}>
-            <button
-              onClick={() => scrollToSection('about')}
+            <Link
+              to="/about"
               style={navLinkStyle}
             >
               About
-            </button>
-            <button
-              onClick={() => scrollToSection('contact')}
+            </Link>
+            <Link
+              to="/contact"
               style={navLinkStyle}
             >
               Contact
-            </button>
+            </Link>
           </div>
 
           {/* Auth Buttons */}
@@ -91,18 +83,20 @@ export default function LandingPage() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div style={mobileMenuStyle}>
-            <button
-              onClick={() => scrollToSection('about')}
+            <Link
+              to="/about"
               style={mobileNavLinkStyle}
+              onClick={() => setMobileMenuOpen(false)}
             >
               About
-            </button>
-            <button
-              onClick={() => scrollToSection('contact')}
+            </Link>
+            <Link
+              to="/contact"
               style={mobileNavLinkStyle}
+              onClick={() => setMobileMenuOpen(false)}
             >
               Contact
-            </button>
+            </Link>
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: 'var(--spacing-md)' }}>
               {isAuthenticated ? (
                 <>
@@ -148,69 +142,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* About Section */}
-      <section id="about" style={aboutSectionStyle}>
-        <div style={sectionContainerStyle}>
-          <h2 style={sectionTitleStyle}>About SmartSeason</h2>
-          <div style={aboutContentStyle}>
-            <div style={aboutCardStyle}>
-              <div style={aboutIconStyle}>🌾</div>
-              <h3 style={aboutCardTitleStyle}>Real-time Monitoring</h3>
-              <p style={aboutCardTextStyle}>
-                Track crop growth stages and field conditions with live updates. Get instant notifications when important changes occur in your fields.
-              </p>
-            </div>
-            <div style={aboutCardStyle}>
-              <div style={aboutIconStyle}>📊</div>
-              <h3 style={aboutCardTitleStyle}>Data-Driven Insights</h3>
-              <p style={aboutCardTextStyle}>
-                Make informed decisions with comprehensive analytics and historical field data. Optimize your farming strategies based on real insights.
-              </p>
-            </div>
-            <div style={aboutCardStyle}>
-              <div style={aboutIconStyle}>🔒</div>
-              <h3 style={aboutCardTitleStyle}>Secure & Reliable</h3>
-              <p style={aboutCardTextStyle}>
-                Enterprise-grade security with role-based access control. Separate interfaces for administrators and field agents ensuring data integrity.
-              </p>
-            </div>
-          </div>
-          <div style={aboutDescriptionStyle}>
-            <h3 style={{ marginBottom: 'var(--spacing-md)' }}>Why Choose SmartSeason?</h3>
-            <p style={{ lineHeight: 1.8, marginBottom: 'var(--spacing-md)' }}>
-              SmartSeason transforms agricultural field management by digitizing manual processes. Traditional agriculture relies on time-consuming inspections and paper-based records, leading to inefficiencies and missed opportunities. Our platform automates field monitoring, provides real-time updates, and delivers actionable insights to help you optimize crop management and increase farm productivity.
-            </p>
-            <p style={{ lineHeight: 1.8 }}>
-              Whether you manage a single field or hundreds of acres, SmartSeason scales with your operations. Reduce operational costs, improve crop yields, and make faster decisions with comprehensive data visibility.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Section */}
-      <section id="contact" style={contactSectionStyle}>
-        <div style={sectionContainerStyle}>
-          <h2 style={sectionTitleStyle}>Get In Touch</h2>
-          <div style={contactContentStyle}>
-            <div style={contactCardStyle}>
-              <div style={contactIconStyle}>📧</div>
-              <h3>Email</h3>
-              <p>support@smartseason.com</p>
-            </div>
-            <div style={contactCardStyle}>
-              <div style={contactIconStyle}>🌐</div>
-              <h3>Website</h3>
-              <p>www.smartseason.com</p>
-            </div>
-            <div style={contactCardStyle}>
-              <div style={contactIconStyle}>📱</div>
-              <h3>Support</h3>
-              <p>Available 24/7</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer style={footerStyle}>
         <div style={sectionContainerStyle}>
@@ -221,8 +152,8 @@ export default function LandingPage() {
             </div>
             <div>
               <h4 style={{ margin: '0 0 var(--spacing-md)' }}>Quick Links</h4>
-              <button onClick={() => scrollToSection('about')} style={footerLinkStyle}>About</button>
-              <button onClick={() => scrollToSection('contact')} style={footerLinkStyle}>Contact</button>
+              <Link to="/about" style={footerLinkStyle}>About</Link>
+              <Link to="/contact" style={footerLinkStyle}>Contact</Link>
               {isAuthenticated && (
                 <Link to={dashboardRoute} style={footerLinkStyle}>Dashboard</Link>
               )}
@@ -453,90 +384,9 @@ const getStartedButtonStyle = {
   cursor: 'pointer',
 };
 
-const aboutSectionStyle = {
-  padding: 'var(--spacing-xl) var(--spacing-lg)',
-  backgroundColor: 'var(--color-bg)',
-};
-
-const contactSectionStyle = {
-  padding: 'var(--spacing-xl) var(--spacing-lg)',
-  backgroundColor: 'var(--color-surface)',
-  borderTop: '1px solid var(--color-border)',
-};
-
 const sectionContainerStyle = {
   maxWidth: '1200px',
   margin: '0 auto',
-};
-
-const sectionTitleStyle = {
-  fontSize: '2.5rem',
-  fontWeight: 700,
-  textAlign: 'center' as const,
-  marginBottom: 'var(--spacing-xl)',
-  color: 'var(--color-text)',
-};
-
-const aboutContentStyle = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-  gap: 'var(--spacing-lg)',
-  marginBottom: 'var(--spacing-xl)',
-};
-
-const aboutCardStyle = {
-  backgroundColor: 'var(--color-surface)',
-  padding: 'var(--spacing-lg)',
-  borderRadius: 'var(--radius-lg)',
-  boxShadow: 'var(--shadow-sm)',
-  textAlign: 'center' as const,
-  border: '1px solid var(--color-border)',
-  transition: 'transform 0.2s, box-shadow 0.2s',
-};
-
-const aboutIconStyle = {
-  fontSize: '3rem',
-  marginBottom: 'var(--spacing-md)',
-};
-
-const aboutCardTitleStyle = {
-  fontSize: '1.25rem',
-  fontWeight: 600,
-  marginBottom: 'var(--spacing-md)',
-  color: 'var(--color-primary)',
-};
-
-const aboutCardTextStyle = {
-  color: 'var(--color-text-muted)',
-  lineHeight: 1.6,
-  margin: 0,
-};
-
-const aboutDescriptionStyle = {
-  backgroundColor: 'var(--color-surface)',
-  padding: 'var(--spacing-lg)',
-  borderRadius: 'var(--radius-lg)',
-  border: '1px solid var(--color-border)',
-  color: 'var(--color-text)',
-};
-
-const contactContentStyle = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-  gap: 'var(--spacing-lg)',
-};
-
-const contactCardStyle = {
-  backgroundColor: 'var(--color-bg)',
-  padding: 'var(--spacing-lg)',
-  borderRadius: 'var(--radius-lg)',
-  textAlign: 'center' as const,
-  border: '1px solid var(--color-border)',
-};
-
-const contactIconStyle = {
-  fontSize: '2.5rem',
-  marginBottom: 'var(--spacing-md)',
 };
 
 const footerStyle = {
