@@ -1,12 +1,12 @@
 # SmartSeason Backend API
 
-## 🚀 **Enterprise-Grade Agricultural Intelligence Platform**
+##  **Enterprise-Grade Agricultural Intelligence Platform**
 
 A sophisticated RESTful API powering AI-driven agricultural field monitoring with real-time analytics, computer vision integration, and intelligent crop management.
 
 ---
 
-## **🏗️ Architecture Overview**
+## ** Architecture Overview**
 
 ### **Core Technology Stack**
 - **Framework**: FastAPI (Python 3.9+)
@@ -26,7 +26,7 @@ A sophisticated RESTful API powering AI-driven agricultural field monitoring wit
 
 ---
 
-## **📊 API Endpoints**
+## ** API Endpoints**
 
 ### **Authentication**
 ```http
@@ -60,7 +60,7 @@ GET  /api/ai/system-status        # AI system metrics
 
 ---
 
-## **🤖 AI Integration Architecture**
+## ** AI Integration Architecture**
 
 ### **Computer Vision Pipeline**
 ```
@@ -82,7 +82,7 @@ Drone Image Upload → Preprocessing → AI Analysis → Bounding Boxes → Heal
 
 ---
 
-## **🔧 Development Setup**
+## ** Development Setup**
 
 ### **Prerequisites**
 ```bash
@@ -139,7 +139,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 
 ---
 
-## **🛡️ Security Implementation**
+## ** Security Implementation**
 
 ### **Authentication & Authorization**
 - **JWT Tokens**: Secure session management with expiration
@@ -156,7 +156,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 
 ---
 
-## **📈 Performance & Scaling**
+## ** Performance & Scaling**
 
 ### **Optimization Features**
 - **Database Indexing**: Optimized query performance
@@ -173,7 +173,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 
 ---
 
-## **🚀 Future Enhancements**
+## ** Future Enhancements**
 
 ### **Phase 2: Real AI Integration**
 - **TensorFlow/PyTorch**: Actual ML model deployment
@@ -198,7 +198,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 
 ---
 
-## **🧪 Testing**
+## ** Testing**
 
 ### **Test Suite**
 ```bash
@@ -223,7 +223,7 @@ pytest tests/api/
 
 ---
 
-## **📊 Project Metrics**
+## ** Project Metrics**
 
 ### **Code Quality**
 - **Type Safety**: Full Python type hints
