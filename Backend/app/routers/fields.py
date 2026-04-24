@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+import uuid
 
 from app.database import get_db
 from app.models.user import User, UserRole
@@ -171,6 +172,43 @@ def update_field_stage(
     )
     db.add(update)
     db.commit()
+
+    return field_to_response(field)
+
+
+@router.patch("/{field_id}/assign", response_model=FieldResponse)
+def assign_field_agent(
+    field_id: str,
+    request: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """
+    Assign or unassign an agent to a field.
+    Admin only endpoint.
+    """
+    field = db.query(Field).filter(Field.id == field_id).first()
+    if not field:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Field not found"
+        )
+
+    # Validate assigned agent exists if provided
+    if "assigned_agent_id" in request and request["assigned_agent_id"]:
+        agent = (
+            db.query(User)
+            .filter(User.id == request["assigned_agent_id"], User.role == UserRole.AGENT)
+            .first()
+        )
+        if not agent:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Assigned agent not found",
+            )
+
+    field.assigned_agent_id = request.get("assigned_agent_id")
+    db.commit()
+    db.refresh(field)
 
     return field_to_response(field)
 

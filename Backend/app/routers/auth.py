@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import uuid
 
+from app.config import settings
 from app.database import get_db
 from app.models.user import User, UserRole, ApprovalStatus
 from app.schemas.auth import LoginRequest, LoginResponse, AgentRegistrationRequest, AgentResponse

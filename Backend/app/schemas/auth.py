@@ -44,5 +44,4 @@ class AgentResponse(BaseModel):
 
 
 class AgentApprovalRequest(BaseModel):
-    agent_id: str
     action: str  # "approve" or "reject"
