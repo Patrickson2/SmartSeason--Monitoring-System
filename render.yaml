@@ -2,7 +2,6 @@ services:
   - type: web
     name: smartseason-api
     env: python
-    pythonVersion: "3.11"
     rootDir: Backend
     plan: free
     buildCommand: pip install --upgrade pip && pip install --prefer-binary -r requirements.txt
@@ -10,7 +9,7 @@ services:
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
-        value: "3.11.0"
+        value: "3.12.0"
       - key: DATABASE_URL
         value: sqlite:///./smartseason.db
       - key: SECRET_KEY
