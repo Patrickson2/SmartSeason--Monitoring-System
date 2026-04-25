@@ -13,6 +13,7 @@ from app.schemas.field import (
     FieldStageUpdate,
     FieldUpdateCreate,
     FieldUpdateResponse,
+    FieldWithHistoryResponse,
 )
 from app.services.field_service import compute_field_status
 from app.services.auth_service import get_current_user, require_admin
@@ -122,6 +123,55 @@ def get_field(
             )
 
     return field_to_response(field)
+
+
+@router.get(
+    "/{field_id}/detail",
+    response_model=FieldWithHistoryResponse,
+    dependencies=[Depends(require_admin)],
+)
+def get_field_detail(field_id: str, db: Session = Depends(get_db)):
+    """
+    Get a single field with full update history.
+    Admin only endpoint.
+    """
+    field = db.query(Field).filter(Field.id == field_id).first()
+    if not field:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Field not found"
+        )
+
+    updates = (
+        db.query(FieldUpdate)
+        .filter(FieldUpdate.field_id == field_id)
+        .order_by(FieldUpdate.created_at.desc())
+        .all()
+    )
+
+    return FieldWithHistoryResponse(
+        id=field.id,
+        name=field.name,
+        crop_type=field.crop_type,
+        planting_date=field.planting_date,
+        current_stage=field.current_stage.value,
+        notes=field.notes,
+        assigned_agent_id=field.assigned_agent_id,
+        created_by_id=field.created_by_id,
+        created_at=field.created_at,
+        updated_at=field.updated_at,
+        status=compute_field_status(field),
+        updates=[
+            FieldUpdateResponse(
+                id=u.id,
+                field_id=u.field_id,
+                agent_id=u.agent_id,
+                stage_changed_to=u.stage_changed_to.value if u.stage_changed_to else None,
+                observation=u.observation,
+                created_at=u.created_at,
+            )
+            for u in updates
+        ],
+    )
 
 
 @router.patch("/{field_id}/stage", response_model=FieldResponse)

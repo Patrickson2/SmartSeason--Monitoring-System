@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import type { AuthResponse, LoginRequest, Field, FieldUpdate, Agent, FieldCreate, AgentRegistrationRequest } from './types';
+import type { AuthResponse, LoginRequest, Field, FieldUpdate, Agent, FieldCreate, AgentRegistrationRequest, FieldWithHistory } from './types';
 
 const API_URL = 'https://smartseason-monitoring-system-7.onrender.com/api';
 
@@ -48,6 +48,10 @@ export const fieldsApi = {
     const res = await api.get<Field>(`/fields/${id}`);
     return res.data;
   },
+  getFieldDetail: async (id: string): Promise<FieldWithHistory> => {
+    const res = await api.get<FieldWithHistory>(`/fields/${id}/detail`);
+    return res.data;
+  },
   createField: async (data: FieldCreate): Promise<Field> => {
     const res = await api.post<Field>('/fields', data);
     return res.data;
@@ -56,8 +60,16 @@ export const fieldsApi = {
     const res = await api.patch<Field>(`/fields/${id}/stage`, { stage });
     return res.data;
   },
+  assignAgent: async (id: string, agentId: string | null): Promise<Field> => {
+    const res = await api.patch<Field>(`/fields/${id}/assign`, { assigned_agent_id: agentId });
+    return res.data;
+  },
   getFieldUpdates: async (fieldId: string): Promise<FieldUpdate[]> => {
     const res = await api.get<FieldUpdate[]>(`/fields/${fieldId}/updates`);
+    return res.data;
+  },
+  getAllUpdates: async (): Promise<FieldUpdate[]> => {
+    const res = await api.get<FieldUpdate[]>('/fields/updates/all');
     return res.data;
   },
   addFieldUpdate: async (fieldId: string, data: { stage_changed_to?: string; observation?: string }): Promise<FieldUpdate> => {
@@ -73,6 +85,10 @@ export const usersApi = {
   },
   createAgent: async (data: { name: string; email: string; password: string }): Promise<Agent> => {
     const res = await api.post<Agent>('/users/agents', data);
+    return res.data;
+  },
+  approveAgent: async (agentId: string, action: 'approve' | 'reject'): Promise<{ message: string }> => {
+    const res = await api.post<{ message: string }>(`/users/agents/${agentId}/approve`, { action });
     return res.data;
   },
 };

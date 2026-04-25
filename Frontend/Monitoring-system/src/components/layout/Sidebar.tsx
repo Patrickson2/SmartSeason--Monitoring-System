@@ -5,6 +5,7 @@ const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
   { to: '/admin/fields', label: 'Fields' },
   { to: '/admin/agents', label: 'Agents' },
+  { to: '/admin/updates', label: 'Updates' },
 ];
 
 const agentLinks = [

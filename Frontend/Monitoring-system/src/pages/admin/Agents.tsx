@@ -26,9 +26,25 @@ export default function AdminAgents() {
     },
   });
 
-  const handleSubmit = (e: Event) => {
+  const approveMutation = useMutation({
+    mutationFn: ({ id, action }: { id: string; action: 'approve' | 'reject' }) => usersApi.approveAgent(id, action),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['agents'] });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createMutation.mutate(formData);
+  };
+
+  const getStatusBadge = (status: string) => {
+    const styles: Record<string, React.CSSProperties> = {
+      approved: { backgroundColor: '#d1fae5', color: '#065f46', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 500 },
+      pending: { backgroundColor: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 500 },
+      rejected: { backgroundColor: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 500 },
+    };
+    return <span style={styles[status] || styles.pending}>{status.charAt(0).toUpperCase() + status.slice(1)}</span>;
   };
 
   if (isLoading) return <div style={{ padding: 'var(--spacing-xl)' }}><p>Loading...</p></div>;
@@ -46,14 +62,37 @@ export default function AdminAgents() {
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr style={{ backgroundColor: 'var(--color-bg)' }}>
-              <th style={thStyle}>Name</th><th style={thStyle}>Email</th><th style={thStyle}>Fields Assigned</th>
+              <th style={thStyle}>Name</th><th style={thStyle}>Email</th><th style={thStyle}>Status</th><th style={thStyle}>Fields</th><th style={thStyle}>Actions</th>
             </tr></thead>
             <tbody>
               {agents.map((agent) => (
                 <tr key={agent.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                   <td style={tdStyle}>{agent.name}</td>
                   <td style={tdStyle}>{agent.email}</td>
+                  <td style={tdStyle}>{getStatusBadge(agent.approval_status)}</td>
                   <td style={tdStyle}>{agent.fields_count}</td>
+                  <td style={tdStyle}>
+                    {agent.approval_status === 'pending' && (
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => approveMutation.mutate({ id: agent.id, action: 'approve' })}
+                          disabled={approveMutation.isPending}
+                          style={{ backgroundColor: '#10b981', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => approveMutation.mutate({ id: agent.id, action: 'reject' })}
+                          disabled={approveMutation.isPending}
+                          style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                    {agent.approval_status === 'approved' && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Active</span>}
+                    {agent.approval_status === 'rejected' && <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Rejected</span>}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -62,7 +101,7 @@ export default function AdminAgents() {
       </div>
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title="Add New Agent">
-        <form onSubmit={(e) => handleSubmit(e as any)}>
+        <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="agent-name">Name *</label>
             <input type="text" id="agent-name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />

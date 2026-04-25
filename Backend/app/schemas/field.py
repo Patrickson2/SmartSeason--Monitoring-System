@@ -41,7 +41,7 @@ class FieldResponse(BaseModel):
 
 
 class FieldWithHistoryResponse(FieldResponse):
-    updates: List["FieldUpdateResponse"] = []
+    updates: List[FieldUpdateResponse] = []
 
 
 class FieldUpdateCreate(BaseModel):

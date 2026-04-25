@@ -6,9 +6,36 @@ from app.database import get_db
 from app.models.user import User
 from app.models.field import Field
 from app.schemas.field import FieldUpdateResponse
-from app.services.auth_service import get_current_user
+from app.services.auth_service import get_current_user, require_admin
 
 router = APIRouter(prefix="/fields", tags=["field-updates"])
+
+
+@router.get("/updates/all", response_model=List[FieldUpdateResponse], dependencies=[Depends(require_admin)])
+def get_all_updates(db: Session = Depends(get_db)):
+    """
+    Get all field updates across all fields.
+    Admin only endpoint.
+    """
+    from app.models.field_update import FieldUpdate
+
+    updates = (
+        db.query(FieldUpdate)
+        .order_by(FieldUpdate.created_at.desc())
+        .all()
+    )
+
+    return [
+        FieldUpdateResponse(
+            id=u.id,
+            field_id=u.field_id,
+            agent_id=u.agent_id,
+            stage_changed_to=u.stage_changed_to.value if u.stage_changed_to else None,
+            observation=u.observation,
+            created_at=u.created_at,
+        )
+        for u in updates
+    ]
 
 
 @router.get("/{field_id}/updates", response_model=List[FieldUpdateResponse])

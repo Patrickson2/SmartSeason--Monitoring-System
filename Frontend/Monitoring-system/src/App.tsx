@@ -8,6 +8,8 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminFields from './pages/admin/Fields';
 import AdminAgents from './pages/admin/Agents';
+import AdminFieldDetail from './pages/admin/FieldDetail';
+import UpdatesMonitor from './pages/admin/UpdatesMonitor';
 import AgentDashboard from './pages/agent/Dashboard';
 import AgentMyFields from './pages/agent/MyFields';
 import AgentFieldDetail from './pages/agent/FieldDetail';
@@ -54,6 +56,8 @@ function App() {
       <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       <Route path="/admin/fields" element={<AdminRoute><AdminFields /></AdminRoute>} />
       <Route path="/admin/agents" element={<AdminRoute><AdminAgents /></AdminRoute>} />
+      <Route path="/admin/fields/:id" element={<AdminRoute><AdminFieldDetail /></AdminRoute>} />
+      <Route path="/admin/updates" element={<AdminRoute><UpdatesMonitor /></AdminRoute>} />
 
       {/* Agent Routes */}
       <Route path="/agent/dashboard" element={<AgentRoute><AgentDashboard /></AgentRoute>} />

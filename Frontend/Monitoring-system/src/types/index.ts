@@ -67,3 +67,11 @@ export interface FieldCreate {
   assigned_agent_id?: string;
   notes?: string;
 }
+
+export interface FieldWithHistory extends Field {
+  updates: FieldUpdate[];
+}
+
+export interface AgentApprovalRequest {
+  action: 'approve' | 'reject';
+}

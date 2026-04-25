@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fieldsApi, usersApi } from '../../api';
 import type { Field, Agent, FieldCreate } from '../../types';
 import Modal from '../../components/Modal';
 
 export default function AdminFields() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState<FieldCreate>({ name: '', crop_type: '', planting_date: '', notes: '' });
@@ -41,7 +43,7 @@ export default function AdminFields() {
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr style={{ backgroundColor: 'var(--color-bg)' }}>
-              <th style={thStyle}>Name</th><th style={thStyle}>Crop Type</th><th style={thStyle}>Stage</th><th style={thStyle}>Assigned To</th><th style={thStyle}>Planting Date</th>
+              <th style={thStyle}>Name</th><th style={thStyle}>Crop Type</th><th style={thStyle}>Stage</th><th style={thStyle}>Assigned To</th><th style={thStyle}>Planting Date</th><th style={thStyle}>Actions</th>
             </tr></thead>
             <tbody>
               {fields.map((field) => (
@@ -51,6 +53,14 @@ export default function AdminFields() {
                   <td style={tdStyle}>{field.current_stage}</td>
                   <td style={tdStyle}>{agents.find((a) => a.id === field.assigned_agent_id)?.name || '-'}</td>
                   <td style={tdStyle}>{field.planting_date ? new Date(field.planting_date).toLocaleDateString() : '-'}</td>
+                  <td style={tdStyle}>
+                    <button
+                      onClick={() => navigate(`/admin/fields/${field.id}`)}
+                      style={{ backgroundColor: 'var(--color-primary)', color: 'white', border: 'none', padding: '4px 12px', borderRadius: '4px', fontSize: '0.75rem', cursor: 'pointer' }}
+                    >
+                      View
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
