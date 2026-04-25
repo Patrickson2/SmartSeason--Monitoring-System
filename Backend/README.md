@@ -1,23 +1,26 @@
 # SmartSeason Backend API
 
-##  **Enterprise-Grade Agricultural Intelligence Platform**
+## Enterprise-Grade Agricultural Intelligence Platform
 
-A sophisticated RESTful API powering AI-driven agricultural field monitoring with real-time analytics, computer vision integration, and intelligent crop management.
+A RESTful API powering AI-driven agricultural field monitoring with real-time analytics, computer vision integration, and intelligent crop management.
 
 ---
 
-## ** Architecture Overview**
+## Architecture Overview
 
-### **Core Technology Stack**
-- **Framework**: FastAPI (Python 3.9+)
-- **Database**: PostgreSQL with SQLAlchemy ORM
+### Core Technology Stack
+
+- **Framework**: FastAPI (Python 3.11)
+- **Database**: PostgreSQL (Docker) / SQLite (Render free tier)
+- **ORM**: SQLAlchemy 2.0 with declarative mapped columns
 - **Authentication**: JWT tokens with role-based access control
 - **API Documentation**: Auto-generated OpenAPI/Swagger docs
-- **Validation**: Pydantic schemas for robust data validation
+- **Validation**: Pydantic v2 schemas
 - **Migration Management**: Alembic for database versioning
-- **Security**: CORS, password hashing, input sanitization
+- **Security**: CORS, bcrypt password hashing, input sanitization
 
-### **Advanced Features**
+### Advanced Features
+
 - **AI Computer Vision Integration**: Mock ML endpoints for crop detection
 - **Weather Intelligence**: Simulated weather data and recommendations
 - **Smart Analytics**: Field status computation and risk assessment
@@ -26,22 +29,25 @@ A sophisticated RESTful API powering AI-driven agricultural field monitoring wit
 
 ---
 
-## ** API Endpoints**
+## API Endpoints
 
-### **Authentication**
+### Authentication
+
 ```http
 POST /api/auth/login          # User authentication
-POST /api/auth/register       # User registration
+POST /api/auth/register/agent # Agent registration (pending approval)
 ```
 
-### **User Management**
+### User Management
+
 ```http
 GET  /api/users/agents        # List all agents (Admin)
 POST /api/users/agents        # Create agent (Admin)
-PATCH /api/users/agents/{id}/approve  # Approve/reject agent (Admin)
+POST /api/users/agents/{id}/approve  # Approve/reject agent (Admin)
 ```
 
-### **Field Management**
+### Field Management
+
 ```http
 GET    /api/fields              # List fields (role-filtered)
 POST   /api/fields              # Create field (Admin)
@@ -49,9 +55,11 @@ GET    /api/fields/{id}         # Get field details
 PATCH  /api/fields/{id}/stage   # Update crop stage
 PATCH  /api/fields/{id}/assign  # Assign agent (Admin)
 POST   /api/fields/{id}/updates # Add observations
+GET    /api/fields/{id}/updates # Get update history
 ```
 
-### **AI-Powered Analysis**
+### AI-Powered Analysis
+
 ```http
 POST /api/ai/analyze-field/{id}   # Analyze drone image
 GET  /api/ai/insights/{id}       # Get field intelligence
@@ -60,38 +68,18 @@ GET  /api/ai/system-status        # AI system metrics
 
 ---
 
-## ** AI Integration Architecture**
+## Development Setup
 
-### **Computer Vision Pipeline**
-```
-Drone Image Upload → Preprocessing → AI Analysis → Bounding Boxes → Health Assessment → Recommendations
-```
+### Prerequisites
 
-### **Smart Analytics**
-- **Crop Detection**: Individual plant identification with confidence scoring
-- **Health Classification**: Healthy/At Risk/Critical status determination
-- **Growth Stage Analysis**: Automated crop development tracking
-- **Yield Prediction**: ML-based harvest forecasting
-- **Irrigation Intelligence**: Weather-based watering recommendations
-
-### **Data Models**
-- **Bounding Box Coordinates**: Precise crop location mapping
-- **Confidence Scores**: AI detection reliability metrics
-- **Health Indicators**: Multi-factor plant health assessment
-- **Risk Assessment**: Field-level threat analysis
-
----
-
-## ** Development Setup**
-
-### **Prerequisites**
 ```bash
-Python 3.9+
-PostgreSQL 12+
+Python 3.11+
+PostgreSQL 14+ (for Docker/local dev)
 pip 21.0+
 ```
 
-### **Installation**
+### Installation
+
 ```bash
 # Clone repository
 git clone <repository-url>
@@ -111,96 +99,153 @@ cp .env.example .env
 # Edit .env with your database credentials
 ```
 
-### **Database Setup**
+### Environment Variables
+
 ```bash
-# Create database
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/smartseason
+SECRET_KEY=your-secret-key-change-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+ADMIN_EMAIL=admin@smartseason.com
+ADMIN_PASSWORD=Admin123!
+ADMIN_NAME=SmartSeason Admin
+ALLOWED_ORIGINS=https://your-frontend.com,https://app.your-frontend.com
+```
+
+> **Note**: `ALLOWED_ORIGINS` is comma-separated and used for CORS in production. Leave empty to allow localhost dev servers.
+
+### Database Setup
+
+```bash
+# Create database (PostgreSQL)
 createdb smartseason
 
 # Run migrations
 alembic upgrade head
 
-# Create admin user (automatic on startup)
-# Default: admin@smartseason.com / Admin123!
-```
-
-### **Running the Server**
-```bash
-# Development mode
+# Start server
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Production mode
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
-### **API Documentation**
+> The default admin user is created automatically on startup if no admin exists.
+
+### API Documentation
+
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
-- **OpenAPI JSON**: http://localhost:8000/openapi.json
+- **Health Check**: http://localhost:8000/health
 
 ---
 
-## ** Security Implementation**
+## Docker Setup
 
-### **Authentication & Authorization**
+### Using Docker Compose (Full Stack)
+
+```bash
+# From project root
+docker-compose up --build
+```
+
+This starts:
+
+- **Backend**: http://localhost:8000
+- **Frontend**: http://localhost:5173
+- **Database**: PostgreSQL on port 5432
+
+### Backend Only (Docker)
+
+```bash
+cd Backend
+docker build -t smartseason-api .
+docker run -p 8000:8000 --env-file .env smartseason-api
+```
+
+---
+
+## Render Deployment
+
+### Setup
+
+1. Push code to GitHub.
+2. Create a new **Web Service** on [Render](https://render.com).
+3. Connect your repository.
+4. Render will auto-detect `render.yaml` (Blueprint) or use these settings:
+   - **Environment**: Python 3
+   - **Build Command**: `pip install --upgrade pip && pip install --prefer-binary -r requirements.txt`
+   - **Start Command**: `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Root Directory**: `Backend`
+
+### Environment Variables on Render
+
+| Key               | Example Value                                                   |
+| ----------------- | --------------------------------------------------------------- |
+| `DATABASE_URL`    | `sqlite:///./smartseason.db` (free tier) or your PostgreSQL URL |
+| `SECRET_KEY`      | Auto-generate or set a strong random string                     |
+| `ADMIN_PASSWORD`  | Set a secure password                                           |
+| `ALLOWED_ORIGINS` | `https://your-frontend.onrender.com`                            |
+
+> **Free Tier Note**: Render free tier uses an ephemeral filesystem. SQLite data will persist between restarts but will be wiped on each deploy. For production persistence, upgrade to PostgreSQL on Render.
+
+---
+
+## Security Implementation
+
+### Authentication & Authorization
+
 - **JWT Tokens**: Secure session management with expiration
 - **Role-Based Access**: Admin/Agent permission levels
 - **Password Security**: bcrypt hashing with salt
 - **Input Validation**: Pydantic schema validation
-- **CORS Configuration**: Cross-origin request security
+- **CORS Configuration**: Cross-origin request security (configurable via `ALLOWED_ORIGINS`)
 
-### **Data Protection**
+### Data Protection
+
 - **SQL Injection Prevention**: SQLAlchemy ORM protection
 - **XSS Prevention**: Input sanitization
-- **Rate Limiting**: API endpoint throttling
 - **HTTPS Ready**: SSL/TLS configuration support
 
 ---
 
-## ** Performance & Scaling**
+## Project Structure
 
-### **Optimization Features**
+```
+Backend/
+├── alembic/              # Database migrations
+├── app/
+│   ├── config.py         # Settings & environment variables
+│   ├── database.py       # SQLAlchemy engine & session
+│   ├── main.py           # FastAPI app & lifespan events
+│   ├── models/           # SQLAlchemy models
+│   ├── routers/          # API route handlers
+│   ├── schemas/          # Pydantic request/response models
+│   └── services/         # Business logic & auth
+├── Dockerfile            # Production Docker image
+├── render.yaml           # Render Blueprint
+├── requirements.txt      # Python dependencies
+└── runtime.txt           # Python runtime version
+```
+
+---
+
+## Performance & Scaling
+
+### Optimization Features
+
 - **Database Indexing**: Optimized query performance
 - **Connection Pooling**: Efficient database connections
 - **Async Operations**: FastAPI async/await support
-- **Caching Strategy**: Redis-ready architecture
 - **Load Balancing**: Multi-worker deployment support
 
-### **Monitoring & Logging**
+### Monitoring & Logging
+
+- **Health Checks**: `/health` endpoint for uptime monitoring
 - **Structured Logging**: Request/response tracking
-- **Performance Metrics**: Response time monitoring
 - **Error Tracking**: Comprehensive exception handling
-- **Health Checks**: System status endpoints
 
 ---
 
-## ** Future Enhancements**
+## Testing
 
-### **Phase 2: Real AI Integration**
-- **TensorFlow/PyTorch**: Actual ML model deployment
-- **AWS SageMaker**: Cloud-based model training
-- **Google Cloud Vision**: Alternative vision API
-- **Azure Computer Vision**: Enterprise AI services
-- **Custom Model Training**: Domain-specific crop recognition
-
-### **Phase 3: Advanced Analytics**
-- **Time Series Analysis**: Historical trend prediction
-- **Satellite Integration**: Large-scale monitoring
-- **IoT Sensor Integration**: Real-time field data
-- **Predictive Maintenance**: Equipment failure prediction
-- **Market Integration**: Crop price forecasting
-
-### **Phase 4: Enterprise Features**
-- **Multi-Tenancy**: Multiple farm organizations
-- **Advanced Reporting**: Custom analytics dashboards
-- **Mobile API**: Native app development
-- **Webhook Integration**: Third-party system connections
-- **Compliance**: Agricultural regulation tracking
-
----
-
-## ** Testing**
-
-### **Test Suite**
 ```bash
 # Run unit tests
 pytest tests/
@@ -210,87 +255,16 @@ pytest --cov=app tests/
 
 # Integration tests
 pytest tests/integration/
-
-# API testing
-pytest tests/api/
 ```
 
-### **Test Categories**
-- **Unit Tests**: Business logic validation
-- **Integration Tests**: Database operations
-- **API Tests**: Endpoint functionality
-- **Security Tests**: Authentication and authorization
-
 ---
 
-## ** Project Metrics**
+## Version
 
-### **Code Quality**
-- **Type Safety**: Full Python type hints
-- **Documentation**: Comprehensive docstrings
-- **Error Handling**: Graceful failure management
-- **Code Coverage**: 90%+ test coverage
-- **Linting**: Black, flake8, mypy compliance
-
-### **API Performance**
-- **Response Time**: <200ms average
-- **Throughput**: 1000+ requests/second
-- **Uptime**: 99.9% availability target
-- **Scalability**: Horizontal scaling ready
-
----
-
-## **🤝 Contributing**
-
-### **Development Workflow**
-1. Fork repository
-2. Create feature branch
-3. Implement changes with tests
-4. Run test suite
-5. Submit pull request
-6. Code review and merge
-
-### **Coding Standards**
-- **PEP 8**: Python style guide compliance
-- **Type Hints**: Mandatory type annotations
-- **Documentation**: Docstring requirements
-- **Testing**: Minimum 80% coverage
-- **Security**: Security review process
-
----
-
-## **📞 Support & Contact**
-
-### **Technical Documentation**
-- **API Reference**: Complete endpoint documentation
-- **Database Schema**: Entity relationship diagrams
-- **Deployment Guide**: Production setup instructions
-- **Troubleshooting**: Common issues and solutions
-
-### **Project Information**
-- **Version**: 2.0.0
+- **Version**: 2.1.0
 - **License**: MIT
-- **Author**: SmartSeason Development Team
 - **Last Updated**: 2026-04-24
 
 ---
 
-## **🎯 Business Value**
-
-### **Key Differentiators**
-- **AI-Driven Insights**: Advanced agricultural intelligence
-- **Scalable Architecture**: Enterprise-ready design
-- **Real-Time Analytics**: Immediate data processing
-- **Professional Grade**: Production-quality implementation
-- **Future-Proof**: Extensible and upgradeable
-
-### **Target Use Cases**
-- **Commercial Farms**: Large-scale crop management
-- **Agricultural Coops**: Multi-farm coordination
-- **Research Institutions**: Crop study and analysis
-- **Government Agencies**: Agricultural monitoring
-- **AgriTech Companies**: Platform integration
-
----
-
-**This backend represents a sophisticated, production-ready API that demonstrates advanced software engineering capabilities, AI integration expertise, and enterprise-level architecture design.**
+**This backend is a production-ready API demonstrating advanced software engineering capabilities, AI integration expertise, and enterprise-level architecture design.**

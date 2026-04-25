@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import List
 
 
 class Settings(BaseSettings):
@@ -13,6 +12,7 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str = "admin@smartseason.com"
     ADMIN_PASSWORD: str = "Admin123!"
     ADMIN_NAME: str = "SmartSeason Admin"
+    ALLOWED_ORIGINS: str = ""
 
 
 settings = Settings()
