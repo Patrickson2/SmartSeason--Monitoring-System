@@ -40,10 +40,6 @@ class FieldResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class FieldWithHistoryResponse(FieldResponse):
-    updates: List[FieldUpdateResponse] = []
-
-
 class FieldUpdateCreate(BaseModel):
     stage_changed_to: Optional[str] = None
     observation: Optional[str] = None
@@ -58,3 +54,7 @@ class FieldUpdateResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class FieldWithHistoryResponse(FieldResponse):
+    updates: List[FieldUpdateResponse] = []
