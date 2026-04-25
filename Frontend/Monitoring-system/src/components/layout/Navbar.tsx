@@ -18,7 +18,18 @@ export default function Navbar({ title }: NavbarProps) {
     <header style={navbarStyle}>
       <div style={titleStyle}>{title}</div>
       <div style={actionsStyle}>
-        <button onClick={handleLogout} style={logoutButtonStyle}>
+        <button 
+          onClick={handleLogout} 
+          style={logoutButtonStyle}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#119f29';
+            e.currentTarget.style.borderColor = '#119f29';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
+            e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+          }}
+        >
           Logout
         </button>
       </div>
@@ -28,21 +39,23 @@ export default function Navbar({ title }: NavbarProps) {
 
 const navbarStyle: React.CSSProperties = {
   height: '64px',
-  backgroundColor: 'var(--color-surface)',
-  borderBottom: '1px solid var(--color-border)',
+  backgroundColor: '#16c134',
+  borderBottom: '1px solid rgba(255,255,255,0.15)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: '0 var(--spacing-xl)',
+  padding: '0 2rem',
   position: 'sticky',
   top: 0,
   zIndex: 50,
+  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
 };
 
 const titleStyle: React.CSSProperties = {
-  fontSize: '1.25rem',
-  fontWeight: 600,
-  color: 'var(--color-text)',
+  fontSize: '1.35rem',
+  fontWeight: 700,
+  color: '#ffffff',
+  letterSpacing: '-0.5px',
 };
 
 const actionsStyle: React.CSSProperties = {
@@ -52,12 +65,14 @@ const actionsStyle: React.CSSProperties = {
 };
 
 const logoutButtonStyle: React.CSSProperties = {
-  padding: 'var(--spacing-sm) var(--spacing-md)',
-  backgroundColor: 'transparent',
-  color: 'var(--color-text)',
-  border: '1px solid var(--color-border)',
+  padding: '0.5rem 1rem',
+  backgroundColor: 'rgba(255,255,255,0.15)',
+  color: '#ffffff',
+  border: '1px solid rgba(255,255,255,0.3)',
   borderRadius: 'var(--radius-md)',
   cursor: 'pointer',
   fontSize: '0.875rem',
+  fontWeight: 500,
   transition: 'all 0.2s ease',
 };
+
