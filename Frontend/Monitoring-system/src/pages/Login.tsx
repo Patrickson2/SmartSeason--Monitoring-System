@@ -177,10 +177,34 @@ export default function Login() {
                 <p style={formSubtitleStyle}>
                   Sign in to your {selectedRole} account
                 </p>
-                {selectedRole === 'admin' && (
-                  <p style={{ marginTop: '0.5rem', color: '#f8f1e5', opacity: 0.85, fontSize: '0.9rem' }}>
-                    Use admin@smartseason.com / Admin123! to access the administrator account. Public signup creates agent accounts only.
-                  </p>
+              {selectedRole === 'admin' && (
+                  <div style={{ marginTop: '0.75rem', padding: '0.75rem', backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '8px' }}>
+                    <p style={{ color: '#f8f1e5', opacity: 0.9, fontSize: '0.85rem', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
+                      Test Credentials
+                    </p>
+                    <p style={{ color: '#f8f1e5', opacity: 0.85, fontSize: '0.8rem', margin: '0 0 0.25rem 0' }}>
+                      Email: admin@smartseason.com
+                    </p>
+                    <p style={{ color: '#f8f1e5', opacity: 0.85, fontSize: '0.8rem', margin: '0 0 0.5rem 0' }}>
+                      Password: Admin123!
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setLoginEmail('admin@smartseason.com'); setLoginPassword('Admin123!'); }}
+                      style={{
+                        padding: '0.4rem 0.75rem',
+                        backgroundColor: 'rgba(255,255,255,0.15)',
+                        color: '#f8f1e5',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Auto-fill Admin Credentials
+                    </button>
+                  </div>
                 )}
               </div>
 

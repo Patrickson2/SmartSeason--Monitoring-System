@@ -46,7 +46,13 @@ app = FastAPI(
 )
 
 # CORS middleware
-origins = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000"]
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://smart-season-monitoring-system-cqmh.vercel.app",
+]
 if settings.ALLOWED_ORIGINS:
     origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
 
