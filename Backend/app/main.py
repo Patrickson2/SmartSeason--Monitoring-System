@@ -1,8 +1,10 @@
 import uuid
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from app.config import settings
 from app.database import engine, SessionLocal, Base
@@ -11,16 +13,36 @@ from app.models.user import ApprovalStatus
 from app.routers import router
 from app.services.auth_service import hash_password
 
+logger = logging.getLogger(__name__)
+
+
+def _safe_role_value(role):
+    """Return role string safely for both enum objects and SQLite strings."""
+    return role.value if hasattr(role, 'value') else role
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: create tables and default admin on startup."""
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created/verified.")
+    except Exception as e:
+        logger.error(f"Failed to create tables: {e}")
 
     db = SessionLocal()
     try:
-        existing_admin = db.query(User).filter(User.role == UserRole.ADMIN).first()
+        # Check if admin exists (handle SQLite string vs enum safely)
+        all_users = db.query(User).all()
+        existing_admin = None
+        for u in all_users:
+            role_str = _safe_role_value(u.role)
+            if role_str == UserRole.ADMIN.value:
+                existing_admin = u
+                break
+
         if not existing_admin:
+            logger.info("No admin found. Creating default admin...")
             admin = User(
                 id=str(uuid.uuid4()),
                 name=settings.ADMIN_NAME,
@@ -32,6 +54,12 @@ async def lifespan(app: FastAPI):
             )
             db.add(admin)
             db.commit()
+            logger.info(f"Default admin created: {settings.ADMIN_EMAIL}")
+        else:
+            logger.info("Default admin already exists.")
+    except Exception as e:
+        logger.error(f"Failed to create default admin: {e}")
+        db.rollback()
     finally:
         db.close()
 
@@ -75,4 +103,11 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    """Health check that also verifies database connectivity."""
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
