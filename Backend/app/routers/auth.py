@@ -30,14 +30,18 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive"
         )
 
+    # Normalize enum values for SQLite compatibility
+    user_role_val = user.role.value if hasattr(user.role, 'value') else user.role
+    approval_status_val = user.approval_status.value if hasattr(user.approval_status, 'value') else user.approval_status
+
     # Check approval status for agents
-    if user.role == UserRole.AGENT and user.approval_status != ApprovalStatus.APPROVED:
-        if user.approval_status == ApprovalStatus.PENDING:
+    if user_role_val == UserRole.AGENT.value and approval_status_val != ApprovalStatus.APPROVED.value:
+        if approval_status_val == ApprovalStatus.PENDING.value:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Your account is pending approval from an administrator"
             )
-        elif user.approval_status == ApprovalStatus.REJECTED:
+        elif approval_status_val == ApprovalStatus.REJECTED.value:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Your account registration has been rejected"
@@ -45,7 +49,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 
     access_token = create_access_token(str(user.id))
 
-    return LoginResponse(access_token=access_token, user_role=user.role.value)
+    return LoginResponse(access_token=access_token, user_role=user_role_val)
 
 
 @router.post("/register/agent", response_model=AgentResponse)
@@ -81,10 +85,11 @@ def register_agent(request: AgentRegistrationRequest, db: Session = Depends(get_
     db.commit()
     db.refresh(agent)
 
+    approval_status = agent.approval_status.value if hasattr(agent.approval_status, 'value') else agent.approval_status
     return AgentResponse(
         id=agent.id,
         name=agent.name,
         email=agent.email,
-        approval_status=agent.approval_status.value,
+        approval_status=approval_status,
         fields_count=0
     )

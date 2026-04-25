@@ -42,8 +42,9 @@ def create_agent(request: AgentCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(agent)
 
+    approval_status = agent.approval_status.value if hasattr(agent.approval_status, 'value') else agent.approval_status
     return AgentResponse(
-        id=agent.id, name=agent.name, email=agent.email, approval_status=agent.approval_status.value, fields_count=0
+        id=agent.id, name=agent.name, email=agent.email, approval_status=approval_status, fields_count=0
     )
 
 
@@ -61,12 +62,13 @@ def list_agents(db: Session = Depends(get_db)):
     for agent in agents:
         # Count fields assigned to this agent
         fields_count = len(agent.assigned_fields) if agent.assigned_fields else 0
+        approval_status = agent.approval_status.value if hasattr(agent.approval_status, 'value') else agent.approval_status
         result.append(
             AgentResponse(
                 id=agent.id,
                 name=agent.name,
                 email=agent.email,
-                approval_status=agent.approval_status.value,
+                approval_status=approval_status,
                 fields_count=fields_count,
             )
         )
