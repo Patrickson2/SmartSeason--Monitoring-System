@@ -1,15 +1,11 @@
 services:
   - type: web
     name: smartseason-api
-    env: python
-    rootDir: Backend
+    env: docker
     plan: free
-    buildCommand: pip install --upgrade pip && pip install --prefer-binary -r requirements.txt
-    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /health
+    dockerContext: .
+    dockerfilePath: Dockerfile
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.12.0"
       - key: DATABASE_URL
         value: sqlite:///./smartseason.db
       - key: SECRET_KEY
