@@ -84,7 +84,9 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
     """
     from app.models.user import UserRole
 
-    if current_user.role != UserRole.ADMIN:
+    # Normalize role for SQLite compatibility (enum object vs plain string)
+    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    if role_val != UserRole.ADMIN.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"
         )

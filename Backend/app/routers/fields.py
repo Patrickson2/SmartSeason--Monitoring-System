@@ -21,6 +21,11 @@ from app.services.auth_service import get_current_user, require_admin
 router = APIRouter(prefix="/fields", tags=["fields"])
 
 
+def _safe_enum_value(val):
+    """Return enum value safely for both enum objects and SQLite strings."""
+    return val.value if hasattr(val, 'value') else val
+
+
 def field_to_response(field: Field) -> FieldResponse:
     """Convert Field model to response with computed status."""
     return FieldResponse(
@@ -28,7 +33,7 @@ def field_to_response(field: Field) -> FieldResponse:
         name=field.name,
         crop_type=field.crop_type,
         planting_date=field.planting_date,
-        current_stage=field.current_stage.value,
+        current_stage=_safe_enum_value(field.current_stage),
         notes=field.notes,
         assigned_agent_id=field.assigned_agent_id,
         created_by_id=field.created_by_id,
@@ -48,7 +53,9 @@ def list_fields(
     - Admin sees all fields
     - Agent sees only their assigned fields
     """
-    if current_user.role == UserRole.ADMIN:
+    # Normalize role for SQLite compatibility
+    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    if role_val == UserRole.ADMIN.value:
         fields = db.query(Field).all()
     else:
         fields = (
@@ -115,7 +122,8 @@ def get_field(
         )
 
     # Agent can only view their assigned fields
-    if current_user.role == UserRole.AGENT:
+    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    if role_val == UserRole.AGENT.value:
         if field.assigned_agent_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -153,7 +161,7 @@ def get_field_detail(field_id: str, db: Session = Depends(get_db)):
         name=field.name,
         crop_type=field.crop_type,
         planting_date=field.planting_date,
-        current_stage=field.current_stage.value,
+        current_stage=_safe_enum_value(field.current_stage),
         notes=field.notes,
         assigned_agent_id=field.assigned_agent_id,
         created_by_id=field.created_by_id,
@@ -165,7 +173,7 @@ def get_field_detail(field_id: str, db: Session = Depends(get_db)):
                 id=u.id,
                 field_id=u.field_id,
                 agent_id=u.agent_id,
-                stage_changed_to=u.stage_changed_to.value if u.stage_changed_to else None,
+                stage_changed_to=_safe_enum_value(u.stage_changed_to) if u.stage_changed_to else None,
                 observation=u.observation,
                 created_at=u.created_at,
             )
@@ -201,7 +209,8 @@ def update_field_stage(
         )
 
     # Agent can only update their assigned fields
-    if current_user.role == UserRole.AGENT:
+    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    if role_val == UserRole.AGENT.value:
         if field.assigned_agent_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -281,7 +290,8 @@ def add_field_observation(
         )
 
     # Agent can only update their assigned fields
-    if current_user.role == UserRole.AGENT:
+    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    if role_val == UserRole.AGENT.value:
         if field.assigned_agent_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -304,7 +314,7 @@ def add_field_observation(
         id=field_update.id,
         field_id=field_update.field_id,
         agent_id=field_update.agent_id,
-        stage_changed_to=field_update.stage_changed_to.value
+        stage_changed_to=_safe_enum_value(field_update.stage_changed_to)
         if field_update.stage_changed_to
         else None,
         observation=field_update.observation,

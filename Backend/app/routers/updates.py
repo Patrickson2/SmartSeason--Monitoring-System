@@ -30,7 +30,7 @@ def get_all_updates(db: Session = Depends(get_db)):
             id=u.id,
             field_id=u.field_id,
             agent_id=u.agent_id,
-            stage_changed_to=u.stage_changed_to.value if u.stage_changed_to else None,
+            stage_changed_to=(u.stage_changed_to.value if hasattr(u.stage_changed_to, 'value') else u.stage_changed_to) if u.stage_changed_to else None,
             observation=u.observation,
             created_at=u.created_at,
         )
@@ -60,7 +60,8 @@ def get_field_updates(
         )
 
     # Agent can only view their assigned fields' updates
-    if current_user.role == UserRole.AGENT:
+    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    if role_val == UserRole.AGENT.value:
         if field.assigned_agent_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -79,7 +80,7 @@ def get_field_updates(
             id=u.id,
             field_id=u.field_id,
             agent_id=u.agent_id,
-            stage_changed_to=u.stage_changed_to.value if u.stage_changed_to else None,
+            stage_changed_to=(u.stage_changed_to.value if hasattr(u.stage_changed_to, 'value') else u.stage_changed_to) if u.stage_changed_to else None,
             observation=u.observation,
             created_at=u.created_at,
         )
