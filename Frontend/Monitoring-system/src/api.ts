@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import type { AuthResponse, LoginRequest, Field, FieldUpdate, Agent, FieldCreate, AgentRegistrationRequest, FieldWithHistory } from './types';
 
-const API_URL = 'https://smartseason-monitoring-system-7.onrender.com/api';
+const API_URL = 'https://smartseason-monitoring-system-8.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_URL,
