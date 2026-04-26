@@ -115,9 +115,7 @@ export default function Login() {
                 <span style={featureIconStyle}></span>
                 <span>Collaborative platform</span>
               </div>
-            </div>
           </div>
-        </div>
       </div>
 
       {/* Right Side - Form */}
@@ -177,10 +175,10 @@ export default function Login() {
                 <p style={formSubtitleStyle}>
                   Sign in to your {selectedRole} account
                 </p>
-              {selectedRole === 'admin' && (
+                {selectedRole === 'admin' && (
                   <div style={{ marginTop: '0.75rem', padding: '0.75rem', backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '8px' }}>
                     <p style={{ color: '#f8f1e5', opacity: 0.9, fontSize: '0.85rem', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
-                      Test Credentials
+                      Demo Admin Credentials
                     </p>
                     <p style={{ color: '#f8f1e5', opacity: 0.85, fontSize: '0.8rem', margin: '0 0 0.25rem 0' }}>
                       Email: admin@smartseason.com
@@ -203,6 +201,35 @@ export default function Login() {
                       }}
                     >
                       Auto-fill Admin Credentials
+                    </button>
+                  </div>
+                )}
+                {selectedRole === 'agent' && (
+                  <div style={{ marginTop: '0.75rem', padding: '0.75rem', backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: '8px' }}>
+                    <p style={{ color: '#f8f1e5', opacity: 0.9, fontSize: '0.85rem', margin: '0 0 0.5rem 0', fontWeight: 600 }}>
+                      Demo Agent Credentials
+                    </p>
+                    <p style={{ color: '#f8f1e5', opacity: 0.85, fontSize: '0.8rem', margin: '0 0 0.25rem 0' }}>
+                      Email: agent1@smartseason.demo
+                    </p>
+                    <p style={{ color: '#f8f1e5', opacity: 0.85, fontSize: '0.8rem', margin: '0 0 0.5rem 0' }}>
+                      Password: password123
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setLoginEmail('agent1@smartseason.demo'); setLoginPassword('password123'); }}
+                      style={{
+                        padding: '0.4rem 0.75rem',
+                        backgroundColor: 'rgba(255,255,255,0.15)',
+                        color: '#f8f1e5',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Auto-fill Agent Credentials
                     </button>
                   </div>
                 )}
@@ -242,35 +269,6 @@ export default function Login() {
                     type="button"
                     onClick={() => setShowLoginPassword(!showLoginPassword)}
                     style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#333',
-                      fontSize: '16px',
-                      padding: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <FontAwesomeIcon 
-  icon={showLoginPassword ? faEyeSlash : faEye} 
-  style={{ fontSize: '16px' }}
-/>
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoginLoading}
-                style={{
-                  ...submitButtonStyle,
-                  ...(isLoginLoading ? submitButtonDisabledStyle : {}),
                 }}
               >
                 {isLoginLoading ? 'Signing in...' : 'Sign In'}

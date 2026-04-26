@@ -63,6 +63,20 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
 
+    # Auto-seed demo data if no agents exist yet
+    try:
+        from seed import seed_demo_data
+        db = SessionLocal()
+        agent_count = db.query(User).filter(User.role == UserRole.AGENT).count()
+        db.close()
+        if agent_count == 0:
+            logger.info("No agents found. Auto-seeding demo data...")
+            seed_demo_data()
+        else:
+            logger.info(f"Found {agent_count} agents - skipping auto-seed.")
+    except Exception as e:
+        logger.warning(f"Auto-seeding skipped: {e}")
+
     yield
 
 

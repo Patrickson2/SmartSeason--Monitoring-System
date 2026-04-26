@@ -207,7 +207,8 @@ def create_seed_data():
         db.close()
 
 
-if __name__ == "__main__":
+def seed_demo_data():
+    """Entry point for auto-seeding from main.py lifespan."""
     # Ensure tables exist
     Base.metadata.create_all(bind=engine)
     
@@ -217,8 +218,12 @@ if __name__ == "__main__":
     db.close()
     
     if not admin:
-        print("  No admin found! Please start the backend first to create the default admin.")
-        print("   Or create an admin user manually before running the seeder.")
-        sys.exit(1)
+        print("  No admin found! Skipping seed - run backend first.")
+        return False
     
     create_seed_data()
+    return True
+
+
+if __name__ == "__main__":
+    seed_demo_data()
