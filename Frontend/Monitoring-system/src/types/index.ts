@@ -32,6 +32,8 @@ export interface FieldUpdate {
   agent_id: string;
   stage_changed_to: CropStage | null;
   observation: string | null;
+  image_url: string | null;
+  analysis_data: string | null;
   created_at: string;
 }
 

@@ -140,7 +140,7 @@ def get_field(
 )
 def get_field_detail(field_id: str, db: Session = Depends(get_db)):
     """
-    Get a single field with full update history.
+    Get a single field with full update history including AI analyses.
     Admin only endpoint.
     """
     field = db.query(Field).filter(Field.id == field_id).first()
@@ -175,6 +175,8 @@ def get_field_detail(field_id: str, db: Session = Depends(get_db)):
                 agent_id=u.agent_id,
                 stage_changed_to=_safe_enum_value(u.stage_changed_to) if u.stage_changed_to else None,
                 observation=u.observation,
+                image_url=u.image_url,
+                analysis_data=u.analysis_data,
                 created_at=u.created_at,
             )
             for u in updates
@@ -299,11 +301,18 @@ def add_field_observation(
             )
 
     # Create field update record
+    stage = None
+    if request.stage_changed_to:
+        try:
+            stage = CropStage(request.stage_changed_to)
+        except ValueError:
+            pass
+
     field_update = FieldUpdate(
         id=str(uuid.uuid4()),
         field_id=field.id,
         agent_id=current_user.id,
-        stage_changed_to=request.stage_changed_to,
+        stage_changed_to=stage,
         observation=request.observation,
     )
     db.add(field_update)
@@ -318,5 +327,7 @@ def add_field_observation(
         if field_update.stage_changed_to
         else None,
         observation=field_update.observation,
+        image_url=field_update.image_url,
+        analysis_data=field_update.analysis_data,
         created_at=field_update.created_at,
     )

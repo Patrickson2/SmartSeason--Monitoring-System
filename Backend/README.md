@@ -129,6 +129,21 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 > The default admin user is created automatically on startup if no admin exists.
 
+### Populate with Demo Data
+
+```bash
+# After starting the backend and confirming tables exist:
+python seed.py
+```
+
+This creates:
+
+- **5 agents** with randomized names
+- **12 fields** with randomized crops and stages
+- **30-40 field updates** simulating agent activity
+- **AI analysis records** with mock data
+- **Login credentials**: `agent1@smartseason.demo` / `password123` (through `agent5`)
+
 ### API Documentation
 
 - **Swagger UI**: http://localhost:8000/docs

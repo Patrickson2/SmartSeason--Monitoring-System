@@ -51,6 +51,8 @@ class FieldUpdateResponse(BaseModel):
     agent_id: str
     stage_changed_to: Optional[str]
     observation: Optional[str]
+    image_url: Optional[str] = None
+    analysis_data: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}

@@ -8,6 +8,7 @@ import json
 from app.database import get_db
 from app.models.user import User, UserRole
 from app.models.field import Field
+from app.models.field_update import FieldUpdate
 from app.services.auth_service import get_current_user
 from app.services.field_service import compute_field_status
 
@@ -23,6 +24,7 @@ async def analyze_field_image(
 ):
     """
     Analyze field image using AI (mock implementation).
+    Stores the analysis result in field_updates so admin can view it.
     Returns crop detection analysis with bounding boxes and health status.
     """
     # Validate field exists and user has access
@@ -34,7 +36,8 @@ async def analyze_field_image(
         )
 
     # Check access permissions
-    if current_user.role == UserRole.AGENT and field.assigned_agent_id != current_user.id:
+    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    if role_val == UserRole.AGENT.value and field.assigned_agent_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this field"
@@ -119,7 +122,8 @@ async def analyze_field_image(
         })
     
     # Add weather-based recommendation
-    if field.current_stage in ["growing", "ready"]:
+    current_stage = field.current_stage.value if hasattr(field.current_stage, 'value') else field.current_stage
+    if current_stage in ["growing", "ready"]:
         recommendations.append({
             "priority": "medium",
             "title": "Irrigation Advisory",
@@ -143,11 +147,24 @@ async def analyze_field_image(
         "recommendations": recommendations,
         "field_conditions": {
             "overall_health": "good" if healthy / total_crops > 0.7 else "moderate" if healthy / total_crops > 0.5 else "poor",
-            "growth_stage": field.current_stage,
+            "growth_stage": current_stage,
             "estimated_yield": f"{random.randint(70, 95)}%",
-            "next_action": "monitor" if field_status == "active" else "prepare_harvest" if field.current_stage == "ready" else "harvest_ready"
+            "next_action": "monitor" if field_status == "active" else "prepare_harvest" if current_stage == "ready" else "harvest_ready"
         }
     }
+
+    # Save analysis to database as a field update
+    # Store image as base64 or URL placeholder (for demo, store a reference)
+    field_update = FieldUpdate(
+        id=str(uuid.uuid4()),
+        field_id=field_id,
+        agent_id=current_user.id,
+        observation=f"AI Analysis: {healthy} healthy, {at_risk} at risk, {critical} critical crops detected.",
+        image_url=f"/api/ai/field-image/{field_id}/{analysis_result['analysis_id']}",
+        analysis_data=json.dumps(analysis_result),
+    )
+    db.add(field_update)
+    db.commit()
 
     return analysis_result
 
@@ -170,7 +187,8 @@ async def get_field_insights(
         )
 
     # Check access permissions
-    if current_user.role == UserRole.AGENT and field.assigned_agent_id != current_user.id:
+    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    if role_val == UserRole.AGENT.value and field.assigned_agent_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this field"
@@ -220,7 +238,8 @@ async def get_field_insights(
         })
     
     # Harvest timing
-    if field.current_stage == "ready":
+    current_stage = field.current_stage.value if hasattr(field.current_stage, 'value') else field.current_stage
+    if current_stage == "ready":
         recommendations.append({
             "type": "harvest",
             "priority": "medium",
@@ -245,7 +264,7 @@ async def get_field_insights(
         "harvest_prediction": harvest_prediction,
         "recommendations": recommendations,
         "field_health_score": random.randint(7, 10),
-        "next_optimal_action": "irrigate" if weather_data["current"]["humidity"] < 50 else "monitor" if field.current_stage == "growing" else "prepare_harvest"
+        "next_optimal_action": "irrigate" if weather_data["current"]["humidity"] < 50 else "monitor" if current_stage == "growing" else "prepare_harvest"
     }
 
     return insights

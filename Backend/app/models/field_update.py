@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import DateTime, Enum, ForeignKey, Text, String
@@ -11,7 +10,7 @@ class FieldUpdate(Base):
     __tablename__ = "field_updates"
 
     id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(36), primary_key=True, default=lambda: str(__import__('uuid').uuid4())
     )
     field_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("fields.id"), nullable=False
@@ -23,6 +22,11 @@ class FieldUpdate(Base):
         Enum(CropStage), nullable=True
     )
     observation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # AI analysis fields - stores drone image analysis results
+    image_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    analysis_data: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON string
+    
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False
     )

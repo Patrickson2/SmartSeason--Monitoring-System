@@ -32,6 +32,8 @@ def get_all_updates(db: Session = Depends(get_db)):
             agent_id=u.agent_id,
             stage_changed_to=(u.stage_changed_to.value if hasattr(u.stage_changed_to, 'value') else u.stage_changed_to) if u.stage_changed_to else None,
             observation=u.observation,
+            image_url=u.image_url,
+            analysis_data=u.analysis_data,
             created_at=u.created_at,
         )
         for u in updates
@@ -82,6 +84,8 @@ def get_field_updates(
             agent_id=u.agent_id,
             stage_changed_to=(u.stage_changed_to.value if hasattr(u.stage_changed_to, 'value') else u.stage_changed_to) if u.stage_changed_to else None,
             observation=u.observation,
+            image_url=u.image_url,
+            analysis_data=u.analysis_data,
             created_at=u.created_at,
         )
         for u in updates
