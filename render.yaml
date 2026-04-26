@@ -20,7 +20,7 @@ services:
       - key: ADMIN_EMAIL
         value: admin@smartseason.com
       - key: ADMIN_PASSWORD
-        generateValue: true
+        value: Admin123!
       - key: ADMIN_NAME
         value: SmartSeason Admin
       - key: ALLOWED_ORIGINS

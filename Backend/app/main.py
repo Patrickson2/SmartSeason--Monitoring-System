@@ -85,21 +85,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://smart-season-monitoring-system-cqmh.vercel.app",
-]
-if settings.ALLOWED_ORIGINS:
-    origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
-
+# CORS middleware - allow all origins for demo/development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
