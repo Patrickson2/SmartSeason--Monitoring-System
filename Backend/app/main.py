@@ -85,10 +85,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware - allow all origins for demo/development
+# CORS middleware - allow frontend origin
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://smart-season-monitoring-system-cqmh.vercel.app"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
