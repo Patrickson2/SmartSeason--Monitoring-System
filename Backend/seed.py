@@ -10,8 +10,8 @@ Usage:
 import sys
 import random
 from datetime import datetime, timedelta
-from app.database import SessionLocal, engine
-from app.models import Base, User, UserRole, Field, FieldUpdate, CropStage, ApprovalStatus
+from app.database import SessionLocal, engine, Base
+from app.models import User, UserRole, Field, FieldUpdate, CropStage, ApprovalStatus
 from app.services.auth_service import hash_password
 
 
