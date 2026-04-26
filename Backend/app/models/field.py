@@ -1,8 +1,7 @@
-import uuid
 import enum
 from datetime import date, datetime
 from typing import Optional
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -17,8 +16,8 @@ class CropStage(str, enum.Enum):
 class Field(Base):
     __tablename__ = "fields"
 
-    id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     crop_type: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -27,11 +26,11 @@ class Field(Base):
         Enum(CropStage), nullable=False, default=CropStage.PLANTED
     )
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    assigned_agent_id: Mapped[Optional[str]] = mapped_column(
-        String(36), ForeignKey("users.id"), nullable=True
+    assigned_agent_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True
     )
-    created_by_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("users.id"), nullable=False
+    created_by_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, nullable=False

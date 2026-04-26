@@ -31,7 +31,7 @@ export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleLogin = async (e: Event) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
     setIsLoginLoading(true);
@@ -53,7 +53,7 @@ export default function Login() {
     }
   };
 
-  const handleRegistration = async (e: Event) => {
+  const handleRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegError('');
     setRegSuccess('');
@@ -115,13 +115,15 @@ export default function Login() {
                 <span style={featureIconStyle}></span>
                 <span>Collaborative platform</span>
               </div>
+            </div>
           </div>
+        </div>
       </div>
 
       {/* Right Side - Form */}
       <div style={rightPanelStyle}>
         <div style={formContainerStyle}>
-              {/* Role Selection */}
+          {/* Role Selection */}
           {isLogin && (
             <div style={roleSelectorStyle}>
               <button
@@ -169,7 +171,7 @@ export default function Login() {
 
           {/* Login Form */}
           {isLogin ? (
-            <form onSubmit={(e) => handleLogin(e as any)} style={formStyle}>
+            <form onSubmit={handleLogin} style={formStyle}>
               <div style={formHeaderStyle}>
                 <h2 style={formTitleStyle}>Welcome Back</h2>
                 <p style={formSubtitleStyle}>
@@ -269,6 +271,35 @@ export default function Login() {
                     type="button"
                     onClick={() => setShowLoginPassword(!showLoginPassword)}
                     style={{
+                      position: 'absolute',
+                      right: '10px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#333',
+                      fontSize: '16px',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <FontAwesomeIcon 
+                      icon={showLoginPassword ? faEyeSlash : faEye} 
+                      style={{ fontSize: '16px' }}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoginLoading}
+                style={{
+                  ...submitButtonStyle,
+                  ...(isLoginLoading ? submitButtonDisabledStyle : {}),
                 }}
               >
                 {isLoginLoading ? 'Signing in...' : 'Sign In'}
@@ -276,7 +307,7 @@ export default function Login() {
             </form>
           ) : (
             /* Registration Form */
-            <form onSubmit={(e) => handleRegistration(e as any)} style={formStyle}>
+            <form onSubmit={handleRegistration} style={formStyle}>
               <div style={formHeaderStyle}>
                 <h2 style={formTitleStyle}>Create your agent account</h2>
                 <p style={formSubtitleStyle}>
@@ -350,9 +381,9 @@ export default function Login() {
                     }}
                   >
                     <FontAwesomeIcon 
-  icon={showRegPassword ? faEyeSlash : faEye} 
-  style={{ fontSize: '16px' }}
-/>
+                      icon={showRegPassword ? faEyeSlash : faEye} 
+                      style={{ fontSize: '16px' }}
+                    />
                   </button>
                 </div>
               </div>
@@ -391,9 +422,9 @@ export default function Login() {
                     }}
                   >
                     <FontAwesomeIcon 
-  icon={showRegConfirmPassword ? faEyeSlash : faEye} 
-  style={{ fontSize: '16px' }}
-/>
+                      icon={showRegConfirmPassword ? faEyeSlash : faEye} 
+                      style={{ fontSize: '16px' }}
+                    />
                   </button>
                 </div>
               </div>
@@ -408,8 +439,7 @@ export default function Login() {
               >
                 {isRegLoading ? 'Creating Account...' : 'Create Account'}
               </button>
-
-                          </form>
+            </form>
           )}
         </div>
       </div>
@@ -644,3 +674,4 @@ const approvalNoteStyle = {
   fontSize: '0.8rem',
   lineHeight: 1.4,
 };
+

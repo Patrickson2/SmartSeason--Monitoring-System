@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field as PydanticField
 from typing import Optional, List
 from datetime import date, datetime
-import uuid
 
 
 class FieldCreate(BaseModel):

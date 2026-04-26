@@ -1,7 +1,6 @@
-import uuid
 import enum
 from datetime import datetime
-from sqlalchemy import Boolean, DateTime, Enum, String, Text
+from sqlalchemy import Boolean, DateTime, Enum, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -20,8 +19,8 @@ class ApprovalStatus(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(

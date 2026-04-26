@@ -1,4 +1,3 @@
-import uuid
 import logging
 from contextlib import asynccontextmanager
 
@@ -44,7 +43,6 @@ async def lifespan(app: FastAPI):
         if not existing_admin:
             logger.info("No admin found. Creating default admin...")
             admin = User(
-                id=str(uuid.uuid4()),
                 name=settings.ADMIN_NAME,
                 email=settings.ADMIN_EMAIL,
                 hashed_password=hash_password(settings.ADMIN_PASSWORD),

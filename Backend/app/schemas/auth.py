@@ -1,7 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field as PydanticField
 from typing import Optional
 from datetime import date, datetime
-import uuid
 
 
 class LoginRequest(BaseModel):

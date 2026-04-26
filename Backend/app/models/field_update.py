@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import DateTime, Enum, ForeignKey, Text, String
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Text, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 from app.models.field import CropStage
@@ -9,14 +9,14 @@ from app.models.field import CropStage
 class FieldUpdate(Base):
     __tablename__ = "field_updates"
 
-    id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(__import__('uuid').uuid4())
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
     )
-    field_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("fields.id"), nullable=False
+    field_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("fields.id"), nullable=False
     )
-    agent_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("users.id"), nullable=False
+    agent_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
     )
     stage_changed_to: Mapped[Optional[CropStage]] = mapped_column(
         Enum(CropStage), nullable=True

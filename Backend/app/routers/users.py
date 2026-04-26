@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
-import uuid
+
 
 from app.database import get_db
 from app.models.user import User, UserRole, ApprovalStatus
@@ -30,7 +30,6 @@ def create_agent(request: AgentCreate, db: Session = Depends(get_db)):
 
     # Create agent with hashed password
     agent = User(
-        id=str(uuid.uuid4()),
         name=request.name,
         email=request.email,
         hashed_password=hash_password(request.password),

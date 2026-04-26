@@ -101,12 +101,15 @@ def create_seed_data():
         db.query(User).filter(User.role == UserRole.AGENT).delete()
         db.commit()
         
+        # Get admin id
+        admin = db.query(User).filter(User.role == UserRole.ADMIN).first()
+        admin_id = admin.id if admin else None
+        
         # Create agents
         print("\n2. Creating agents...")
         agents = []
         for i in range(5):
             agent = User(
-                id=f"agent-{i+1:03d}",
                 name=random_name(),
                 email=f"agent{i+1}@smartseason.demo",
                 hashed_password=hash_password("password123"),
@@ -133,14 +136,13 @@ def create_seed_data():
             planting_date = (datetime.utcnow() - timedelta(days=random.randint(30, 180))).date()
             
             field = Field(
-                id=f"field-{i+1:03d}",
                 name=random_field_name(),
                 crop_type=random.choice(CROP_TYPES),
                 planting_date=planting_date,
                 current_stage=stage,
                 notes=random.choice(OBSERVATIONS) if random.random() > 0.5 else None,
                 assigned_agent_id=random.choice(agents).id if random.random() > 0.2 else None,
-                created_by_id="admin-001",  # Will use existing admin
+                created_by_id=admin_id,
                 created_at=random_date(60, 10),
                 updated_at=random_date(30, 1)
             )
@@ -160,7 +162,6 @@ def create_seed_data():
             num_updates = random.randint(0, 5)
             for j in range(num_updates):
                 update = FieldUpdate(
-                    id=f"update-{field.id}-{j+1:03d}",
                     field_id=field.id,
                     agent_id=field.assigned_agent_id if field.assigned_agent_id else random.choice(agents).id,
                     stage_changed_to=random.choice(stages) if random.random() > 0.5 else None,
@@ -177,7 +178,6 @@ def create_seed_data():
         ai_count = 0
         for field in random.sample(fields, min(6, len(fields))):
             analysis = FieldUpdate(
-                id=f"ai-{field.id}",
                 field_id=field.id,
                 agent_id=field.assigned_agent_id if field.assigned_agent_id else random.choice(agents).id,
                 observation="AI Analysis: Drone image processed successfully",

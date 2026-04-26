@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
-import uuid
+
 import random
 import json
 
@@ -135,7 +135,7 @@ async def analyze_field_image(
     confidence_score = random.uniform(0.82, 0.96)
 
     analysis_result = {
-        "analysis_id": str(uuid.uuid4()),
+        "analysis_id": f"analysis_{random.randint(1000, 9999)}",
         "field_id": field_id,
         "timestamp": "2026-04-24T12:00:00Z",
         "total_crops": total_crops,
@@ -156,7 +156,6 @@ async def analyze_field_image(
     # Save analysis to database as a field update
     # Store image as base64 or URL placeholder (for demo, store a reference)
     field_update = FieldUpdate(
-        id=str(uuid.uuid4()),
         field_id=field_id,
         agent_id=current_user.id,
         observation=f"AI Analysis: {healthy} healthy, {at_risk} at risk, {critical} critical crops detected.",

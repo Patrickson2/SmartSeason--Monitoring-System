@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-import uuid
 
 from app.config import settings
 from app.database import get_db
@@ -73,7 +72,6 @@ def register_agent(request: AgentRegistrationRequest, db: Session = Depends(get_
 
     # Create agent with pending approval
     agent = User(
-        id=str(uuid.uuid4()),
         name=request.name,
         email=request.email,
         hashed_password=hash_password(request.password),
