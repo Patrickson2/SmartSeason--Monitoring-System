@@ -11,6 +11,11 @@ from app.services.auth_service import hash_password, get_current_user, require_a
 router = APIRouter(prefix="/users", tags=["users"])
 
 
+def _normalize_id(value):
+    """Convert integer IDs to string IDs for API responses."""
+    return str(value) if value is not None else None
+
+
 @router.post(
     "/agents", response_model=AgentResponse, dependencies=[Depends(require_admin)]
 )
@@ -43,7 +48,11 @@ def create_agent(request: AgentCreate, db: Session = Depends(get_db)):
 
     approval_status = agent.approval_status.value if hasattr(agent.approval_status, 'value') else agent.approval_status
     return AgentResponse(
-        id=agent.id, name=agent.name, email=agent.email, approval_status=approval_status, fields_count=0
+        id=_normalize_id(agent.id),
+        name=agent.name,
+        email=agent.email,
+        approval_status=approval_status,
+        fields_count=0,
     )
 
 
@@ -64,7 +73,7 @@ def list_agents(db: Session = Depends(get_db)):
         approval_status = agent.approval_status.value if hasattr(agent.approval_status, 'value') else agent.approval_status
         result.append(
             AgentResponse(
-                id=agent.id,
+                id=_normalize_id(agent.id),
                 name=agent.name,
                 email=agent.email,
                 approval_status=approval_status,

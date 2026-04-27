@@ -5,7 +5,7 @@ from app.config import settings
 from app.database import get_db
 from app.models.user import User, UserRole, ApprovalStatus
 from app.schemas.auth import LoginRequest, LoginResponse, AgentRegistrationRequest, AgentResponse
-from app.services.auth_service import verify_password, create_access_token, hash_password
+from app.services.auth_service import verify_password, create_access_token, hash_password, normalize_enum_value
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -30,8 +30,8 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
         )
 
     # Normalize enum values for SQLite compatibility
-    user_role_val = user.role.value if hasattr(user.role, 'value') else user.role
-    approval_status_val = user.approval_status.value if hasattr(user.approval_status, 'value') else user.approval_status
+    user_role_val = normalize_enum_value(user.role)
+    approval_status_val = normalize_enum_value(user.approval_status)
 
     # Check approval status for agents
     if user_role_val == UserRole.AGENT.value and approval_status_val != ApprovalStatus.APPROVED.value:

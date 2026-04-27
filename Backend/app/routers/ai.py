@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models.user import User, UserRole
 from app.models.field import Field
 from app.models.field_update import FieldUpdate
-from app.services.auth_service import get_current_user
+from app.services.auth_service import get_current_user, normalize_enum_value
 from app.services.field_service import compute_field_status
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -36,7 +36,7 @@ async def analyze_field_image(
         )
 
     # Check access permissions
-    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    role_val = normalize_enum_value(current_user.role)
     if role_val == UserRole.AGENT.value and field.assigned_agent_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -186,7 +186,7 @@ async def get_field_insights(
         )
 
     # Check access permissions
-    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    role_val = normalize_enum_value(current_user.role)
     if role_val == UserRole.AGENT.value and field.assigned_agent_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

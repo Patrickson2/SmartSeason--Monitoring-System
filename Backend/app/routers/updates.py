@@ -6,7 +6,11 @@ from app.database import get_db
 from app.models.user import User
 from app.models.field import Field
 from app.schemas.field import FieldUpdateResponse
-from app.services.auth_service import get_current_user, require_admin
+from app.services.auth_service import get_current_user, require_admin, normalize_enum_value
+
+
+def _normalize_id(value):
+    return str(value) if value is not None else None
 
 router = APIRouter(prefix="/fields", tags=["field-updates"])
 
@@ -27,10 +31,10 @@ def get_all_updates(db: Session = Depends(get_db)):
 
     return [
         FieldUpdateResponse(
-            id=u.id,
-            field_id=u.field_id,
-            agent_id=u.agent_id,
-            stage_changed_to=(u.stage_changed_to.value if hasattr(u.stage_changed_to, 'value') else u.stage_changed_to) if u.stage_changed_to else None,
+            id=_normalize_id(u.id),
+            field_id=_normalize_id(u.field_id),
+            agent_id=_normalize_id(u.agent_id),
+            stage_changed_to=normalize_enum_value(u.stage_changed_to) if u.stage_changed_to else None,
             observation=u.observation,
             image_url=u.image_url,
             analysis_data=u.analysis_data,
@@ -62,7 +66,7 @@ def get_field_updates(
         )
 
     # Agent can only view their assigned fields' updates
-    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    role_val = normalize_enum_value(current_user.role)
     if role_val == UserRole.AGENT.value:
         if field.assigned_agent_id != current_user.id:
             raise HTTPException(
@@ -79,10 +83,10 @@ def get_field_updates(
 
     return [
         FieldUpdateResponse(
-            id=u.id,
-            field_id=u.field_id,
-            agent_id=u.agent_id,
-            stage_changed_to=(u.stage_changed_to.value if hasattr(u.stage_changed_to, 'value') else u.stage_changed_to) if u.stage_changed_to else None,
+            id=_normalize_id(u.id),
+            field_id=_normalize_id(u.field_id),
+            agent_id=_normalize_id(u.agent_id),
+            stage_changed_to=normalize_enum_value(u.stage_changed_to) if u.stage_changed_to else None,
             observation=u.observation,
             image_url=u.image_url,
             analysis_data=u.analysis_data,

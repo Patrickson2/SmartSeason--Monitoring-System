@@ -6,6 +6,17 @@ from app.models.field import Field
 StatusResult = Literal["completed", "at_risk", "active"]
 
 
+def _normalize_stage(stage):
+    """Normalize stage to string value (handles enum objects and strings)."""
+    if stage is None:
+        return None
+    if hasattr(stage, "value"):
+        return stage.value
+    if isinstance(stage, str):
+        return stage.lower()
+    return str(stage).lower()
+
+
 def compute_field_status(field: Field) -> StatusResult:
     """
     Compute field status dynamically based on crop stage and time since planting.
@@ -17,10 +28,11 @@ def compute_field_status(field: Field) -> StatusResult:
     - ready + >21 days since planting -> at_risk
     - otherwise -> active
     """
-    from app.models.field import CropStage
+    # Normalize current_stage to string for SQLite compatibility
+    current_stage = _normalize_stage(field.current_stage)
 
     # Harvested fields are completed
-    if field.current_stage == CropStage.HARVESTED:
+    if current_stage == "harvested":
         return "completed"
 
     # Get today's date for calculation
@@ -33,13 +45,13 @@ def compute_field_status(field: Field) -> StatusResult:
         days_since_planting = 0
 
     # Check at_risk conditions based on stage and time
-    if field.current_stage == CropStage.PLANTED and days_since_planting > 14:
+    if current_stage == "planted" and days_since_planting > 14:
         return "at_risk"
 
-    if field.current_stage == CropStage.GROWING and days_since_planting > 60:
+    if current_stage == "growing" and days_since_planting > 60:
         return "at_risk"
 
-    if field.current_stage == CropStage.READY and days_since_planting > 21:
+    if current_stage == "ready" and days_since_planting > 21:
         return "at_risk"
 
     return "active"

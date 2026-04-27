@@ -30,6 +30,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
+def normalize_enum_value(val):
+    """Return a normalized string value for enum objects or string values."""
+    if hasattr(val, 'value'):
+        val = val.value
+    if isinstance(val, str):
+        return val.lower()
+    return val
+
+
 def create_access_token(user_id: str) -> str:
     """Create a JWT access token with user_id as subject and expiry from settings."""
     expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -65,9 +74,12 @@ def get_current_user(
     if payload is None:
         raise credentials_exception
 
-    user_id: str = payload.get("sub")
+    user_id = payload.get("sub")
     if user_id is None:
         raise credentials_exception
+
+    if isinstance(user_id, str) and user_id.isdigit():
+        user_id = int(user_id)
 
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
@@ -84,7 +96,7 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
     from app.models.user import UserRole
 
     # Normalize role for SQLite compatibility (enum object vs plain string)
-    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    role_val = normalize_enum_value(current_user.role)
     if role_val != UserRole.ADMIN.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required"

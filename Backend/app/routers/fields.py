@@ -15,27 +15,33 @@ from app.schemas.field import (
     FieldWithHistoryResponse,
 )
 from app.services.field_service import compute_field_status
-from app.services.auth_service import get_current_user, require_admin
+from app.services.auth_service import get_current_user, require_admin, normalize_enum_value
 
 router = APIRouter(prefix="/fields", tags=["fields"])
 
 
 def _safe_enum_value(val):
     """Return enum value safely for both enum objects and SQLite strings."""
-    return val.value if hasattr(val, 'value') else val
+    normalized = val.value if hasattr(val, 'value') else val
+    return normalized.lower() if isinstance(normalized, str) else normalized
+
+
+def _normalize_id(value):
+    """Convert integer IDs to string IDs for API responses."""
+    return str(value) if value is not None else None
 
 
 def field_to_response(field: Field) -> FieldResponse:
     """Convert Field model to response with computed status."""
     return FieldResponse(
-        id=field.id,
+        id=_normalize_id(field.id),
         name=field.name,
         crop_type=field.crop_type,
         planting_date=field.planting_date,
         current_stage=_safe_enum_value(field.current_stage),
         notes=field.notes,
-        assigned_agent_id=field.assigned_agent_id,
-        created_by_id=field.created_by_id,
+        assigned_agent_id=_normalize_id(field.assigned_agent_id),
+        created_by_id=_normalize_id(field.created_by_id),
         created_at=field.created_at,
         updated_at=field.updated_at,
         status=compute_field_status(field),
@@ -53,7 +59,7 @@ def list_fields(
     - Agent sees only their assigned fields
     """
     # Normalize role for SQLite compatibility
-    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    role_val = normalize_enum_value(current_user.role)
     if role_val == UserRole.ADMIN.value:
         fields = db.query(Field).all()
     else:
@@ -120,7 +126,7 @@ def get_field(
         )
 
     # Agent can only view their assigned fields
-    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    role_val = normalize_enum_value(current_user.role)
     if role_val == UserRole.AGENT.value:
         if field.assigned_agent_id != current_user.id:
             raise HTTPException(
@@ -155,22 +161,22 @@ def get_field_detail(field_id: str, db: Session = Depends(get_db)):
     )
 
     return FieldWithHistoryResponse(
-        id=field.id,
+        id=_normalize_id(field.id),
         name=field.name,
         crop_type=field.crop_type,
         planting_date=field.planting_date,
         current_stage=_safe_enum_value(field.current_stage),
         notes=field.notes,
-        assigned_agent_id=field.assigned_agent_id,
-        created_by_id=field.created_by_id,
+        assigned_agent_id=_normalize_id(field.assigned_agent_id),
+        created_by_id=_normalize_id(field.created_by_id),
         created_at=field.created_at,
         updated_at=field.updated_at,
         status=compute_field_status(field),
         updates=[
             FieldUpdateResponse(
-                id=u.id,
-                field_id=u.field_id,
-                agent_id=u.agent_id,
+                id=_normalize_id(u.id),
+                field_id=_normalize_id(u.field_id),
+                agent_id=_normalize_id(u.agent_id),
                 stage_changed_to=_safe_enum_value(u.stage_changed_to) if u.stage_changed_to else None,
                 observation=u.observation,
                 image_url=u.image_url,
@@ -209,7 +215,7 @@ def update_field_stage(
         )
 
     # Agent can only update their assigned fields
-    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    role_val = normalize_enum_value(current_user.role)
     if role_val == UserRole.AGENT.value:
         if field.assigned_agent_id != current_user.id:
             raise HTTPException(
@@ -289,7 +295,7 @@ def add_field_observation(
         )
 
     # Agent can only update their assigned fields
-    role_val = current_user.role.value if hasattr(current_user.role, 'value') else current_user.role
+    role_val = normalize_enum_value(current_user.role)
     if role_val == UserRole.AGENT.value:
         if field.assigned_agent_id != current_user.id:
             raise HTTPException(
@@ -316,9 +322,9 @@ def add_field_observation(
     db.refresh(field_update)
 
     return FieldUpdateResponse(
-        id=field_update.id,
-        field_id=field_update.field_id,
-        agent_id=field_update.agent_id,
+        id=_normalize_id(field_update.id),
+        field_id=_normalize_id(field_update.field_id),
+        agent_id=_normalize_id(field_update.agent_id),
         stage_changed_to=_safe_enum_value(field_update.stage_changed_to)
         if field_update.stage_changed_to
         else None,
