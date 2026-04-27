@@ -20,6 +20,21 @@ def _safe_role_value(role):
     return role.value if hasattr(role, 'value') else role
 
 
+def _build_cors_origins():
+    """Build CORS allow-origins list from settings and hardcoded defaults."""
+    origins = {
+        "https://smart-season-monitoring-system-cqmh.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:5174",
+    }
+    if settings.ALLOWED_ORIGINS:
+        for origin in settings.ALLOWED_ORIGINS.split(","):
+            origin = origin.strip()
+            if origin:
+                origins.add(origin)
+    return list(origins)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: create tables and default admin on startup."""
@@ -54,10 +69,11 @@ async def lifespan(app: FastAPI):
             db.commit()
             logger.info(f"Default admin created: {settings.ADMIN_EMAIL}")
         else:
-            logger.info("Default admin already exists.")
+            logger.info(f"Default admin already exists: {existing_admin.email}")
     except Exception as e:
-        logger.error(f"Failed to create default admin: {e}")
+        logger.error(f"CRITICAL: Failed to create default admin: {e}")
         db.rollback()
+        raise RuntimeError(f"Admin creation failed: {e}") from e
     finally:
         db.close()
 
@@ -88,8 +104,8 @@ app = FastAPI(
 # CORS middleware - allow frontend origin and localhost for development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://smart-season-monitoring-system-cqmh.vercel.app", "http://localhost:5174"],
-    allow_credentials=False,
+    allow_origins=_build_cors_origins(),
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -113,3 +129,21 @@ def health_check():
         return {"status": "healthy", "database": "connected"}
     except Exception as e:
         return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
+
+
+@app.get("/setup-status")
+def setup_status():
+    """Check if the default admin user exists."""
+    try:
+        db = SessionLocal()
+        admin = db.query(User).filter(User.role == UserRole.ADMIN).first()
+        db.close()
+        if admin:
+            return {
+                "admin_exists": True,
+                "admin_email": admin.email,
+                "admin_name": admin.name,
+            }
+        return {"admin_exists": False}
+    except Exception as e:
+        return {"admin_exists": False, "error": str(e)}

@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -7,6 +8,7 @@ from app.models.user import User, UserRole, ApprovalStatus
 from app.schemas.auth import LoginRequest, LoginResponse, AgentRegistrationRequest, AgentResponse
 from app.services.auth_service import verify_password, create_access_token, hash_password, normalize_enum_value
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
@@ -18,7 +20,16 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     """
     user = db.query(User).filter(User.email == request.email).first()
 
-    if not user or not verify_password(request.password, user.hashed_password):
+    if not user:
+        logger.warning(f"Login failed: user not found for email={request.email}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
+
+    is_valid = verify_password(request.password, user.hashed_password)
+    if not is_valid:
+        logger.warning(f"Login failed: invalid password for email={request.email}, user_id={user.id}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -47,6 +58,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
             )
 
     access_token = create_access_token(str(user.id))
+    logger.info(f"Login success: email={request.email}, user_id={user.id}, role={user_role_val}")
 
     return LoginResponse(access_token=access_token, user_role=user_role_val)
 
