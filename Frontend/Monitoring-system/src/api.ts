@@ -1,7 +1,12 @@
 import axios, { AxiosError } from 'axios';
 import type { AuthResponse, LoginRequest, Field, FieldUpdate, Agent, FieldCreate, AgentRegistrationRequest, FieldWithHistory } from './types';
 
-const API_URL = 'http://localhost:8000/api';
+// Use env var if set (Vercel), otherwise auto-detect based on hostname
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (window.location.hostname === 'localhost'
+    ? 'http://localhost:8000/api'
+    : 'https://smartseason-monitoring-system-8.onrender.com/api');
 
 const api = axios.create({
   baseURL: API_URL,
