@@ -38,44 +38,69 @@ def _build_cors_origins():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: create tables and default admin on startup."""
+    from sqlalchemy.exc import IntegrityError
+
+    # Create tables if they don't exist
     try:
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created/verified.")
     except Exception as e:
         logger.error(f"Failed to create tables: {e}")
 
-    db = SessionLocal()
-    try:
-        # Check if admin exists (handle SQLite string vs enum safely)
-        all_users = db.query(User).all()
-        existing_admin = None
-        for u in all_users:
-            role_str = _safe_role_value(u.role)
-            if role_str == UserRole.ADMIN.value:
-                existing_admin = u
-                break
+    # Try to create admin, with automatic schema recovery
+    max_attempts = 2
+    for attempt in range(max_attempts):
+        db = SessionLocal()
+        try:
+            # Check if admin exists (handle SQLite string vs enum safely)
+            all_users = db.query(User).all()
+            existing_admin = None
+            for u in all_users:
+                role_str = _safe_role_value(u.role)
+                if role_str == UserRole.ADMIN.value:
+                    existing_admin = u
+                    break
 
-        if not existing_admin:
-            logger.info("No admin found. Creating default admin...")
-            admin = User(
-                name=settings.ADMIN_NAME,
-                email=settings.ADMIN_EMAIL,
-                hashed_password=hash_password(settings.ADMIN_PASSWORD),
-                role=UserRole.ADMIN,
-                is_active=True,
-                approval_status=ApprovalStatus.APPROVED,
-            )
-            db.add(admin)
-            db.commit()
-            logger.info(f"Default admin created: {settings.ADMIN_EMAIL}")
-        else:
-            logger.info(f"Default admin already exists: {existing_admin.email}")
-    except Exception as e:
-        logger.error(f"CRITICAL: Failed to create default admin: {e}")
-        db.rollback()
-        raise RuntimeError(f"Admin creation failed: {e}") from e
-    finally:
-        db.close()
+            if not existing_admin:
+                logger.info("No admin found. Creating default admin...")
+                admin = User(
+                    name=settings.ADMIN_NAME,
+                    email=settings.ADMIN_EMAIL,
+                    hashed_password=hash_password(settings.ADMIN_PASSWORD),
+                    role=UserRole.ADMIN,
+                    is_active=True,
+                    approval_status=ApprovalStatus.APPROVED,
+                )
+                db.add(admin)
+                db.commit()
+                logger.info(f"Default admin created: {settings.ADMIN_EMAIL}")
+            else:
+                logger.info(f"Default admin already exists: {existing_admin.email}")
+            break  # Success — exit retry loop
+
+        except IntegrityError as e:
+            db.rollback()
+            db.close()
+            error_msg = str(e)
+            if "users.id" in error_msg and attempt == 0:
+                logger.warning("Schema mismatch detected (users.id missing autoincrement). "
+                             "Dropping and recreating tables with correct schema...")
+                Base.metadata.drop_all(bind=engine)
+                Base.metadata.create_all(bind=engine)
+                logger.info("Tables recreated. Retrying admin creation...")
+                continue  # Retry once
+            else:
+                logger.error(f"CRITICAL: Admin creation failed: {e}")
+                raise RuntimeError(f"Admin creation failed: {e}") from e
+
+        except Exception as e:
+            logger.error(f"CRITICAL: Failed to create default admin: {e}")
+            db.rollback()
+            db.close()
+            raise RuntimeError(f"Admin creation failed: {e}") from e
+        finally:
+            if 'db' in dir() and db.is_active:
+                db.close()
 
     # Auto-seed demo data if no agents exist yet
     try:
