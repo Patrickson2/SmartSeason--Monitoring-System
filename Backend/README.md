@@ -201,6 +201,19 @@ docker run -p 8000:8000 --env-file .env smartseason-api
 
 > **Free Tier Note**: Render free tier uses an ephemeral filesystem. SQLite data will persist between restarts but will be wiped on each deploy. For production persistence, upgrade to PostgreSQL on Render.
 
+### Deployment Troubleshooting
+
+If the backend crashes on startup with `IntegrityError: NOT NULL constraint failed: users.id`, the deployed database has an outdated schema. The app now auto-recovers by detecting this error, dropping the old tables, and recreating them with the correct schema on the next restart. Check Render logs for `Schema mismatch detected... Dropping and recreating tables`.
+
+### Diagnostic Endpoints
+
+| Endpoint            | Description                                   |
+| ------------------- | --------------------------------------------- |
+| `GET /health`       | Database connectivity check                   |
+| `GET /setup-status` | Admin user existence check (no auth required) |
+
+Use `/setup-status` to verify the default admin was created successfully after deployment.
+
 ---
 
 ## Security Implementation

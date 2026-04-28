@@ -4,7 +4,7 @@ A production-ready agricultural monitoring system combining computer vision, rea
 
 ## Technology Stack
 
-**Backend**: FastAPI, PostgreSQL, SQLAlchemy, JWT Authentication  
+**Backend**: FastAPI, SQLite/PostgreSQL, SQLAlchemy, JWT Authentication  
 **Frontend**: React 18, TypeScript, React Query, Vite  
 **AI/ML**: Computer Vision, Bounding Box Detection, Crop Health Analysis  
 **Infrastructure**: Docker, RESTful APIs, OpenAPI Documentation
